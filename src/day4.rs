@@ -1,11 +1,11 @@
 pub fn solution() {
     let input = std::fs::read_to_string("data/day4.txt").unwrap();
-    let lines = input.trim().split("\n");
+    let lines = input.trim().split('\n');
 
     let result = lines.fold((0, 0), |acc, line| {
-        let (a, b) = line.split_once(",").unwrap();
-        let mut a = a.split("-").map(|num| num.parse::<u32>().unwrap());
-        let mut b = b.split("-").map(|num| num.parse::<u32>().unwrap());
+        let (a, b) = line.split_once(',').unwrap();
+        let mut a = a.split('-').map(|num| num.parse::<u32>().unwrap());
+        let mut b = b.split('-').map(|num| num.parse::<u32>().unwrap());
         let (a_min, a_max) = (a.next().unwrap(), a.next().unwrap());
         let (b_min, b_max) = (b.next().unwrap(), b.next().unwrap());
         let point1 =

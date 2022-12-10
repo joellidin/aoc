@@ -6,12 +6,12 @@ pub fn solution() {
     let input = std::fs::read_to_string("data/day7.txt").unwrap();
     input
         .trim()
-        .split("\n")
+        .split('\n')
         .skip(1)
         .filter(|line| *line != "$ ls" && !line.starts_with("dir"))
         .map(|line| {
-            if line.starts_with("$ cd ") {
-                let dir = &line[5..];
+            if let Some(dir) = line.strip_prefix("$ cd ") {
+                let dir = dir;
                 if dir == ".." {
                     let (name, size) = dirs.pop().unwrap();
                     if size < 100_000 {
@@ -24,12 +24,12 @@ pub fn solution() {
                 }
                 return;
             }
-            let (size, _) = line.split_once(" ").unwrap();
+            let (size, _) = line.split_once(' ').unwrap();
             dirs.last_mut().unwrap().1 += size.parse::<usize>().unwrap();
         })
         .for_each(drop);
 
-    while dirs.len() > 0 {
+    while !dirs.is_empty() {
         let (name, size) = dirs.pop().unwrap();
         final_dirs.push((name, size));
         if let Some((_, _)) = dirs.last() {

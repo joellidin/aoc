@@ -13,10 +13,10 @@ fn update_position(first: (isize, isize), next: (isize, isize)) -> (isize, isize
         (-2 | -1, -2 | -1) => (-1, -1),
         _ => unreachable!(),
     };
-    return (next.0 + x, next.1 + y);
+    (next.0 + x, next.1 + y)
 }
 
-fn update_positions(knots: &mut Vec<(isize, isize)>, tail_set: &mut Vec<HashSet<(isize, isize)>>) {
+fn update_positions(knots: &mut [(isize, isize)], tail_set: &mut [HashSet<(isize, isize)>]) {
     for i in 0..knots.len() - 1 {
         knots[i + 1] = update_position(knots[i], knots[i + 1]);
         tail_set[i + 1].insert(knots[i + 1]);
@@ -29,7 +29,7 @@ pub fn solution() {
     let mut tails_set = vec![HashSet::new(); 10];
     for line in input.trim().lines() {
         let (direction, steps) = line
-            .split_once(" ")
+            .split_once(' ')
             .map(|(d, s)| (d, s.parse::<usize>().unwrap()))
             .unwrap();
         for _ in 0..steps {

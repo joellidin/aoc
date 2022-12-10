@@ -67,7 +67,7 @@ pub fn solution() {
     let reader = BufReader::new(file);
     let result: u32 = reader.lines().fold(0, |acc, line| {
         let line = line.unwrap();
-        let (a, b) = line.split_once(" ").unwrap();
+        let (a, b) = line.split_once(' ').unwrap();
         let (a, b) = (Shape::from_str(a).unwrap(), Shape::from_str(b).unwrap());
         let score = if a < b {
             6
@@ -85,7 +85,7 @@ pub fn solution() {
     let reader = BufReader::new(file);
     let result: u32 = reader.lines().fold(0, |acc, line| {
         let line = line.unwrap();
-        let (a, b) = line.split_once(" ").unwrap();
+        let (a, b) = line.split_once(' ').unwrap();
         let a = Shape::from_str(a).unwrap();
         let score = match b {
             "X" => u32::from(a.get_winner_shape()),
