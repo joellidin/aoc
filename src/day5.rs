@@ -32,7 +32,7 @@ impl FromStr for Dock {
 
 impl Dock {
     fn use_crate_mover_9000(&mut self, instructions: &str) {
-        for instruction in instructions.trim().split("\n") {
+        for instruction in instructions.trim().split('\n') {
             let (n_crates, from_stack, to_stack) = Dock::parse_instruction(instruction);
 
             for _ in 0..n_crates {
@@ -43,7 +43,7 @@ impl Dock {
     }
 
     fn use_crate_mover_9001(&mut self, instructions: &str) {
-        for instruction in instructions.trim().split("\n") {
+        for instruction in instructions.trim().split('\n') {
             let (n_crates, from_stack, to_stack) = Dock::parse_instruction(instruction);
             let end = self.stacks[from_stack - 1].len();
             let items: Vec<_> = self.stacks[from_stack - 1]
@@ -57,10 +57,10 @@ impl Dock {
 
     fn parse_instruction(instruction: &str) -> (usize, usize, usize) {
         let (_, split) = instruction.split_once("move ").unwrap();
-        let (n_crates, split) = split.split_once(" ").unwrap();
+        let (n_crates, split) = split.split_once(' ').unwrap();
         let n_crates: usize = n_crates.parse().unwrap();
         let (_, split) = split.split_once("from ").unwrap();
-        let (from_stack, split) = split.split_once(" ").unwrap();
+        let (from_stack, split) = split.split_once(' ').unwrap();
         let from_stack: usize = from_stack.parse().unwrap();
         let (_, to_stack) = split.split_once("to ").unwrap();
         let to_stack: usize = to_stack.parse().unwrap();

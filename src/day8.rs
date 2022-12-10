@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
-fn get_scenic_score(tree_matrix: &Vec<Vec<u32>>, row: &usize, col: &usize) -> usize {
-    let rows = tree_matrix.len();
+fn get_scenic_score(tree_matrix: &[Vec<u32>], row: &usize, col: &usize) -> usize {
     let cols = tree_matrix[0].len();
     let val = tree_matrix[*row][*col];
 
@@ -14,9 +13,9 @@ fn get_scenic_score(tree_matrix: &Vec<Vec<u32>>, row: &usize, col: &usize) -> us
         break;
     }
     let mut south_count = 0;
-    for i in *row + 1..rows {
+    for tree_row in tree_matrix.iter().skip(*row + 1) {
         south_count += 1;
-        if val > tree_matrix[i][*col] {
+        if val > tree_row[*col] {
             continue;
         }
         break;
@@ -45,7 +44,7 @@ pub fn solution() {
     let tree_matrix: Vec<Vec<u32>> = std::fs::read_to_string("data/day8.txt")
         .unwrap()
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
             line.chars()
                 .map(|c| c.to_digit(10).unwrap())
