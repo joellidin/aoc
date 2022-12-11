@@ -1,18 +1,18 @@
 use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone)]
-struct Divisble(u128);
+struct Divisble(usize);
 #[derive(Debug, Copy, Clone)]
 struct MonkeyNumber(usize);
 #[derive(Debug)]
 struct Monkey {
-    starting_items: Vec<u128>,
+    starting_items: Vec<usize>,
     operation: String,
     test: (Divisble, MonkeyNumber, MonkeyNumber),
 }
 
 impl Monkey {
-    fn inspect_items(&self) -> Vec<u128> {
+    fn inspect_items(&self) -> Vec<usize> {
         self.starting_items
             .iter()
             .map(|item| {
@@ -26,32 +26,30 @@ impl Monkey {
                                 .operation
                                 .strip_prefix("* ")
                                 .unwrap()
-                                .parse::<u128>()
+                                .parse::<usize>()
                                 .unwrap();
                     }
+                } else if self.operation.starts_with("+ old") {
+                    new_val = item + item;
                 } else {
-                    if self.operation.starts_with("+ old") {
-                        new_val = item + item;
-                    } else {
-                        new_val = item
-                            + self
-                                .operation
-                                .strip_prefix("+ ")
-                                .unwrap()
-                                .parse::<u128>()
-                                .unwrap();
-                    }
+                    new_val = item
+                        + self
+                            .operation
+                            .strip_prefix("+ ")
+                            .unwrap()
+                            .parse::<usize>()
+                            .unwrap();
                 }
                 new_val
             })
-            .collect::<Vec<u128>>()
+            .collect::<Vec<usize>>()
     }
 
-    fn test_worry_level(&self, worry_level: &u128) -> MonkeyNumber {
-        if worry_level % self.test.0.0 == 0 {
-            return self.test.1;
+    fn test_worry_level(&self, worry_level: &usize) -> MonkeyNumber {
+        if worry_level % self.test.0 .0 == 0 {
+            self.test.1
         } else {
-            return self.test.2;
+            self.test.2
         }
     }
 }
@@ -67,8 +65,8 @@ impl FromStr for Monkey {
             .strip_prefix("Starting items: ")
             .unwrap()
             .split(", ")
-            .map(|n| n.parse::<u128>().unwrap())
-            .collect::<Vec<u128>>();
+            .map(|n| n.parse::<usize>().unwrap())
+            .collect::<Vec<usize>>();
         let operation = lines
             .next()
             .unwrap()
@@ -117,16 +115,45 @@ pub fn solution() {
         .map(|monkey| monkey.parse::<Monkey>().unwrap())
         .collect::<Vec<_>>();
     let mut processed_items = vec![0; monkeys.len()];
-    for _ in 0..1000 {
+    for _ in 0..20 {
         for i in 0..monkeys.len() {
             for item in monkeys[i].inspect_items().iter() {
-                let to_monkey = monkeys[i].test_worry_level(item);
-                monkeys[to_monkey.0].starting_items.push(*item);
+                let to_monkey = monkeys[i].test_worry_level(&(item / 3));
+                let new_val = item / 3;
+                monkeys[to_monkey.0].starting_items.push(new_val);
                 monkeys[i].starting_items.pop();
                 processed_items[i] += 1;
             }
         }
     }
-    println!("{:?}", monkeys);
-    println!("{:?}", processed_items);
+    processed_items.sort_by(|a, b| b.cmp(a));
+
+    let mut monkeys = std::fs::read_to_string("data/day11.txt")
+        .unwrap()
+        .split("\n\n")
+        .map(|monkey| monkey.parse::<Monkey>().unwrap())
+        .collect::<Vec<_>>();
+    let mut processed_items2 = vec![0; monkeys.len()];
+    let mod_val = monkeys.iter().fold(1, |acc, monkey| acc * monkey.test.0 .0);
+    for _ in 0..10000 {
+        for i in 0..monkeys.len() {
+            for item in monkeys[i].inspect_items().iter() {
+                let to_monkey = monkeys[i].test_worry_level(item);
+                let new_val = item % mod_val;
+                monkeys[to_monkey.0].starting_items.push(new_val);
+                monkeys[i].starting_items.pop();
+                processed_items2[i] += 1;
+            }
+        }
+    }
+    processed_items2.sort_by(|a, b| b.cmp(a));
+
+    println!(
+        "Level of monkey business after 20 rounds: {}",
+        processed_items[0] * processed_items[1]
+    );
+    println!(
+        "Level of monkey business after 10000 rounds: {}",
+        processed_items2[0] as u64 * processed_items2[1] as u64
+    );
 }
