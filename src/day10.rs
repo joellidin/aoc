@@ -46,7 +46,7 @@ pub fn solution() {
                     '.'
                 };
                 image[(cycle / 40) as usize].push(char1);
-                image[(cycle / 40) as usize].push(char2);
+                image[((cycle + 1) / 40) as usize].push(char2);
             }
 
             (
