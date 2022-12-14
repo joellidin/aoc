@@ -32,6 +32,13 @@ fn main() {
         "12" => day12::solution(),
         "13" => day13::solution(),
         "14" => day14::solution(),
-        _ => panic!("Not a valid day for advent of code."),
+        s => {
+            let num = s.parse::<usize>().expect("Expecting a positive number");
+            if num > 25 {
+                panic!("Not a valid day for advent of code. Input a number between 1 and 25.");
+            }
+            panic!("This day is not solved yet.");
+
+        }
     };
 }
