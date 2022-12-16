@@ -111,17 +111,10 @@ pub fn solution() {
     let mut max_scenic_score = 0;
     for (i, j) in counted_trees.iter() {
         let sc = get_scenic_score(&tree_matrix, i, j);
-        // println!(gcc"")
         if sc > max_scenic_score {
             max_scenic_score = sc;
         }
     }
-    println!(
-        "There are {} visible trees from outside the grid",
-        visible_trees
-    );
-    println!(
-        "The highest scenic score possible is {:?}",
-        max_scenic_score
-    );
+    println!("There are {visible_trees} visible trees from outside the grid");
+    println!("The highest scenic score possible is {max_scenic_score}");
 }

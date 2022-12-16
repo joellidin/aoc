@@ -69,7 +69,8 @@ impl PartialOrd for Node {
 }
 
 pub fn solution() {
-    let pairs = std::fs::read_to_string("data/day13.txt").unwrap()
+    let pairs = std::fs::read_to_string("data/day13.txt")
+        .unwrap()
         .split("\n\n")
         .map(|pair| {
             pair.split_once('\n')
@@ -90,10 +91,7 @@ pub fn solution() {
         .filter(|(_, (left, right))| left < right)
         .map(|(i, _)| i + 1)
         .sum::<usize>();
-    println!(
-        "Sum of par indices that have the right order: {}",
-        sum_pairs
-    );
+    println!("Sum of par indices that have the right order: {sum_pairs}");
 
     // Part 2
     let mut nodes = pairs

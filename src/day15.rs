@@ -124,7 +124,7 @@ pub fn solution() {
             count -= 1
         }
     }
-    println!("There are {} positions that could contain a beacon", count);
+    println!("There are {count} positions that could contain a beacon");
 
     let bound = 4_000_000;
     for sensor in &sensors {

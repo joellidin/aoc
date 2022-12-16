@@ -44,11 +44,8 @@ pub fn solution() {
         }
     }
     println!(
-        "The first tail has seen {:?} unique tiles",
+        "The first tail has seen {} unique tiles",
         tails_set[1].len()
     );
-    println!(
-        "The last tail has seen {:?} unique tiles",
-        tails_set[9].len()
-    );
+    println!("The last tail has seen {} unique tiles", tails_set[9].len());
 }

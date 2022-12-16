@@ -26,7 +26,7 @@ pub fn solution() {
         }
         acc + score
     });
-    println!("The sum of priorities are: {}", result);
+    println!("The sum of priorities are: {result}");
 
     // Part 2
     let file = File::open("data/day3.txt").unwrap();
@@ -56,5 +56,5 @@ pub fn solution() {
         }
         acc + score
     });
-    println!("The sum of priorities for the group is (part 2): {}", result);
+    println!("The sum of priorities for the group is (part 2): {result}");
 }

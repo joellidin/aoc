@@ -80,12 +80,12 @@ pub fn solution() {
     for i in 0..stacks.stacks.len() {
         result = result + &stacks.stacks[i].pop().unwrap().to_string();
     }
-    println!("The top crates are (part 1): {}", result);
+    println!("The top crates are (part 1): {result}");
 
     stacks2.use_crate_mover_9001(instructions);
     let mut result = "".to_owned();
     for i in 0..stacks2.stacks.len() {
         result = result + &stacks2.stacks[i].pop().unwrap().to_string();
     }
-    println!("The top crates are (part 2): {}", result);
+    println!("The top crates are (part 2): {result}");
 }

@@ -78,7 +78,7 @@ pub fn solution() {
         };
         acc + u32::from(b) + score
     });
-    println!("The total score is {}", result);
+    println!("The total score is {result}");
 
     // Part 2
     let file = File::open("data/day2.txt").unwrap();
@@ -95,5 +95,5 @@ pub fn solution() {
         };
         acc + score
     });
-    println!("The total score is (part2) {}", result)
+    println!("The total score is (part2) {result}")
 }
