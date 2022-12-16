@@ -16,7 +16,7 @@ fn get_marker(n_unique: usize, input: &str) -> usize {
                 .is_some()
         })
         .unwrap()
-        + n_unique as usize
+        + n_unique
 }
 
 pub fn solution() {

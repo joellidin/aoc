@@ -44,9 +44,6 @@ pub fn solution() {
         .map(|(_, size)| size)
         .min()
         .unwrap();
-    println!(
-        "Total sum of directories below 100_000: {}",
-        sum_directories
-    );
-    println!("Smallest directory needed to be deleted: {}", smallest_dir);
+    println!("Total sum of directories below 100_000: {sum_directories}");
+    println!("Smallest directory needed to be deleted: {smallest_dir}");
 }

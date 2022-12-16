@@ -84,7 +84,12 @@ impl Cave {
             }
         }
         let floor = (highest_y + 2) as usize;
-        Cave { map, source, floor, sand_counter: 0 }
+        Cave {
+            map,
+            source,
+            floor,
+            sand_counter: 0,
+        }
     }
 
     fn simulate(&mut self) {
@@ -143,7 +148,7 @@ impl std::fmt::Debug for Cave {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut string = String::new();
         for j in 0..self.floor as isize + 2 {
-            for i in -(self.floor as isize)-3..=self.floor as isize + 3 {
+            for i in -(self.floor as isize) - 3..=self.floor as isize + 3 {
                 let point = Point { x: i + 500, y: j };
                 if point == self.source && self.map.get(&point).is_none() {
                     string.push('+');
@@ -157,7 +162,7 @@ impl std::fmt::Debug for Cave {
             }
             string.push('\n');
         }
-        write!(f, "{}", string)
+        write!(f, "{string}")
     }
 }
 
