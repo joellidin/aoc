@@ -1,4 +1,5 @@
 # Advent of code 2022
+
 My solutions for [Advent of code](https://adventofcode.com/2022) in Rust. To
 run any solved day, run:
 
@@ -7,11 +8,13 @@ cargo run <day_number>
 ```
 
 For example to get the solution for day 3, run:
+
 ```shell
 cargo run 3
 ```
 
 ## Solved days
+
 | Day number  | Solved             |
 | ----------- | ------------------ |
 | 1           | :heavy_check_mark: |
@@ -30,7 +33,7 @@ cargo run 3
 | 14          | :heavy_check_mark: |
 | 15          | :heavy_check_mark: |
 | 16          | :heavy_check_mark: |
-| 17          |                    |
+| 17          | :heavy_check_mark: |
 | 18          |                    |
 | 19          |                    |
 | 20          |                    |
