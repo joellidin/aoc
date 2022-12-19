@@ -105,20 +105,24 @@ fn bfs2(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> 
                     new_open_valves,
                 ));
             }
-            elephant_valve.to_owned().leading_valves.into_iter().for_each(|leading_valve| {
-                let mut new_open_valves = open_valves.clone();
-                new_open_valves.insert(elf_valve.to_owned());
-                let next_valve = valves.get(&leading_valve).unwrap();
-                q.push_front((
-                    elf_valve,
-                    next_valve,
-                    time - 1,
-                    flow + open_valves
-                        .iter()
-                        .fold(0, |acc, valve| acc + valve.flow_rate),
-                    new_open_valves,
-                ));
-            });
+            elephant_valve
+                .to_owned()
+                .leading_valves
+                .into_iter()
+                .for_each(|leading_valve| {
+                    let mut new_open_valves = open_valves.clone();
+                    new_open_valves.insert(elf_valve.to_owned());
+                    let next_valve = valves.get(&leading_valve).unwrap();
+                    q.push_front((
+                        elf_valve,
+                        next_valve,
+                        time - 1,
+                        flow + open_valves
+                            .iter()
+                            .fold(0, |acc, valve| acc + valve.flow_rate),
+                        new_open_valves,
+                    ));
+                });
         }
 
         if elephant_valve.flow_rate > 0 && open_valves.get(elephant_valve).is_none() {
@@ -137,38 +141,50 @@ fn bfs2(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> 
                 ));
             }
 
-            elf_valve.to_owned().leading_valves.into_iter().for_each(|leading_valve| {
-                let mut new_open_valves = open_valves.clone();
-                new_open_valves.insert(elephant_valve.to_owned());
-                let next_valve = valves.get(&leading_valve).unwrap();
-                q.push_front((
-                    next_valve,
-                    elephant_valve,
-                    time - 1,
-                    flow + open_valves
-                        .iter()
-                        .fold(0, |acc, valve| acc + valve.flow_rate),
-                    new_open_valves,
-                ));
-            });
+            elf_valve
+                .to_owned()
+                .leading_valves
+                .into_iter()
+                .for_each(|leading_valve| {
+                    let mut new_open_valves = open_valves.clone();
+                    new_open_valves.insert(elephant_valve.to_owned());
+                    let next_valve = valves.get(&leading_valve).unwrap();
+                    q.push_front((
+                        next_valve,
+                        elephant_valve,
+                        time - 1,
+                        flow + open_valves
+                            .iter()
+                            .fold(0, |acc, valve| acc + valve.flow_rate),
+                        new_open_valves,
+                    ));
+                });
         }
 
-        elf_valve.to_owned().leading_valves.into_iter().for_each(|leading_elf_valve| {
-            elephant_valve.to_owned().leading_valves.into_iter().for_each(|leading_elpehant_valve| {
-                let new_open_valves = open_valves.clone();
-                let next_elf_valve = valves.get(&leading_elf_valve).unwrap();
-                let next_elelphant_valve = valves.get(&leading_elpehant_valve).unwrap();
-                q.push_front((
-                    next_elf_valve,
-                    next_elelphant_valve,
-                    time - 1,
-                    flow + open_valves
-                        .iter()
-                        .fold(0, |acc, valve| acc + valve.flow_rate),
-                    new_open_valves,
-                ));
+        elf_valve
+            .to_owned()
+            .leading_valves
+            .into_iter()
+            .for_each(|leading_elf_valve| {
+                elephant_valve
+                    .to_owned()
+                    .leading_valves
+                    .into_iter()
+                    .for_each(|leading_elpehant_valve| {
+                        let new_open_valves = open_valves.clone();
+                        let next_elf_valve = valves.get(&leading_elf_valve).unwrap();
+                        let next_elelphant_valve = valves.get(&leading_elpehant_valve).unwrap();
+                        q.push_front((
+                            next_elf_valve,
+                            next_elelphant_valve,
+                            time - 1,
+                            flow + open_valves
+                                .iter()
+                                .fold(0, |acc, valve| acc + valve.flow_rate),
+                            new_open_valves,
+                        ));
+                    });
             });
-        });
 
         visited_states.insert((elf_valve, elephant_valve, time, flow));
     }
