@@ -1,4 +1,3 @@
-#![feature(fn_traits)]
 use std::env;
 mod day1;
 mod day2;
@@ -18,6 +17,7 @@ mod day15;
 mod day16;
 mod day17;
 mod day18;
+mod day19;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -41,6 +41,7 @@ fn main() {
         "16" => day16::solution(),
         "17" => day17::solution(),
         "18" => day18::solution(),
+        "19" => day19::solution(),
         s => {
             let num = s.parse::<usize>().expect("Expecting a positive number");
             if num > 25 {
