@@ -39,6 +39,6 @@ cargo run 3
 | 20          | :heavy_check_mark: |
 | 21          | :heavy_check_mark: |
 | 22          | :heavy_check_mark: |
-| 23          |                    |
+| 23          | :heavy_check_mark: |
 | 24          |                    |
 | 25          |                    |
