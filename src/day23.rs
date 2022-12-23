@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet},
+    iter::successors,
+};
 
 #[derive(Hash, Clone, Copy, Debug, PartialEq, Eq)]
 struct Pos {
@@ -14,18 +17,26 @@ enum Dir {
     East,
 }
 
-impl Dir {
-    const DIRS: &[Dir] = &[Dir::North, Dir::South, Dir::West, Dir::East];
+impl From<usize> for Dir {
+    fn from(n: usize) -> Self {
+        match n {
+            0 => Dir::North,
+            1 => Dir::South,
+            2 => Dir::West,
+            3 => Dir::East,
+            _ => panic!("Invalid direction: {n}"),
+        }
+    }
 }
 
 impl Pos {
-    fn has_neighbours<T>(&self, positions: &HashMap<Pos, T>) -> bool {
+    fn has_neighbours(&self, positions: &HashSet<Pos>) -> bool {
         (-1..=1).any(|x| {
             (-1..=1).any(|y| {
                 if x == 0 && y == 0 {
                     false
                 } else {
-                    positions.contains_key(&Pos {
+                    positions.contains(&Pos {
                         x: self.x + x,
                         y: self.y + y,
                     })
@@ -34,128 +45,112 @@ impl Pos {
         })
     }
 
-    fn is_blocked<T>(&self, positions: &HashMap<Pos, T>, direction: &Dir) -> bool {
+    fn is_blocked(&self, positions: &HashSet<Pos>, direction: &Dir) -> bool {
         match direction {
             Dir::North => (-1..=1).any(|x| {
-                positions.contains_key(&Pos {
+                positions.contains(&Pos {
                     x: self.x + x,
                     y: self.y - 1,
                 })
             }),
             Dir::South => (-1..=1).any(|x| {
-                positions.contains_key(&Pos {
+                positions.contains(&Pos {
                     x: self.x + x,
                     y: self.y + 1,
                 })
             }),
             Dir::West => (-1..=1).any(|y| {
-                positions.contains_key(&Pos {
+                positions.contains(&Pos {
                     x: self.x - 1,
                     y: self.y + y,
                 })
             }),
             Dir::East => (-1..=1).any(|y| {
-                positions.contains_key(&Pos {
+                positions.contains(&Pos {
                     x: self.x + 1,
                     y: self.y + y,
                 })
             }),
         }
     }
+
+    fn step(&self, direction: &Dir) -> Pos {
+        match direction {
+            Dir::North => Pos {
+                x: self.x,
+                y: self.y - 1,
+            },
+            Dir::South => Pos {
+                x: self.x,
+                y: self.y + 1,
+            },
+            Dir::West => Pos {
+                x: self.x - 1,
+                y: self.y,
+            },
+            Dir::East => Pos {
+                x: self.x + 1,
+                y: self.y,
+            },
+        }
+    }
 }
 
-fn generate_proposals(positions: &mut HashMap<Pos, Option<Pos>>, direction: usize) {
-    let copy_pos = positions.clone();
+fn generate_proposals(positions: &HashSet<Pos>, proposals: &mut HashMap<Pos, Pos>, direction: Dir) {
+    let mut dupes = HashSet::new();
     positions
-        .iter_mut()
-        .map(|(pos, prop)| {
-            *prop = None;
-            (pos, prop)
-        })
-        .filter(|(pos, _)| pos.has_neighbours(&copy_pos))
-        .for_each(|(pos, prop)| {
-            *prop = None;
-            for i in 0..4 {
-                let dir = Dir::DIRS[(direction + i) % 4];
-                if !pos.is_blocked(&copy_pos, &dir) {
-                    match dir {
-                        Dir::North => {
-                            *prop = Some(Pos {
-                                x: pos.x,
-                                y: pos.y - 1,
-                            });
-                        }
-                        Dir::South => {
-                            *prop = Some(Pos {
-                                x: pos.x,
-                                y: pos.y + 1,
-                            });
-                        }
-                        Dir::West => {
-                            *prop = Some(Pos {
-                                x: pos.x - 1,
-                                y: pos.y,
-                            });
-                        }
-                        Dir::East => {
-                            *prop = Some(Pos {
-                                x: pos.x + 1,
-                                y: pos.y,
-                            });
-                        }
+        .iter()
+        .filter(|pos| pos.has_neighbours(positions))
+        .for_each(|pos| {
+            let dirs = successors(Some(direction as usize), |&dir| Some((dir + 1) % 4));
+            for dir in dirs.take(4).map(Dir::from) {
+                if !pos.is_blocked(positions, &dir) {
+                    if proposals.insert(pos.step(&dir), *pos).is_some() {
+                        dupes.insert(pos.step(&dir));
                     }
                     break;
                 }
             }
         });
-}
-
-fn is_proposal_unique(proposal: &Pos, positions: &HashMap<Pos, Option<Pos>>) -> bool {
-    let mut unique = true;
-    if positions
-        .values()
-        .filter(|p| *p == &Some(*proposal))
-        .count()
-        > 1
-    {
-        unique = false;
-    }
-    unique
-}
-
-fn update_positions(positions: &mut HashMap<Pos, Option<Pos>>) -> bool {
-    let copy_pos = positions.clone();
-    let mut changed = false;
-    copy_pos.iter().for_each(|(pos, prop)| {
-        if let Some(proposal) = *prop {
-            if is_proposal_unique(&proposal, &copy_pos) {
-                positions.remove(pos);
-                positions.insert(proposal, None);
-                changed = true;
-            }
-        }
+    dupes.iter().for_each(|pos| {
+        proposals.remove(pos);
     });
+}
+
+fn update_positions(positions: &mut HashSet<Pos>, proposals: &mut HashMap<Pos, Pos>) -> bool {
+    let mut changed = false;
+    proposals
+        .drain()
+        .map(|(new_pos, old_position)| {
+            positions.remove(&old_position);
+            positions.insert(new_pos);
+            changed = true;
+        })
+        .for_each(drop);
     changed
 }
 
-fn simulate(i: usize, positions: &mut HashMap<Pos, Option<Pos>>, mut dir: usize) -> usize {
-    for num in 0..i {
-        generate_proposals(positions, dir);
-        let changed = update_positions(positions);
-        dir = (dir + 1) % 4;
-        if !changed {
-            return num + 1;
+fn simulate(max_iterations: Option<usize>, positions: &mut HashSet<Pos>, mut dir: Dir) -> usize {
+    let mut proposals = HashMap::new();
+    let mut num = 1;
+    generate_proposals(positions, &mut proposals, dir);
+    while update_positions(positions, &mut proposals) {
+        if num == max_iterations.unwrap_or(usize::MAX) {
+            break;
         }
+        dir = Dir::from((dir as usize + 1) % 4);
+        generate_proposals(positions, &mut proposals, dir);
+        num += 1;
     }
-    i
+    num
 }
 
-fn get_bounding_box<T>(positions: &HashMap<Pos, T>) -> (Pos, Pos) {
+fn get_bounding_box(positions: &HashSet<Pos>) -> (Pos, Pos) {
     let mut min_x = std::isize::MAX;
     let mut min_y = std::isize::MAX;
     let mut max_x = std::isize::MIN;
     let mut max_y = std::isize::MIN;
-    positions.keys().for_each(|pos| {
+    positions.iter().for_each(|pos| {
         if pos.x < min_x {
             min_x = pos.x;
         }
@@ -173,11 +168,11 @@ fn get_bounding_box<T>(positions: &HashMap<Pos, T>) -> (Pos, Pos) {
 }
 
 #[allow(dead_code)]
-fn print_positions<T>(positions: &HashMap<Pos, T>) {
+fn print_positions(positions: &HashSet<Pos>) {
     let (min_pos, max_pos) = get_bounding_box(positions);
     for y in min_pos.y..=max_pos.y {
         for x in min_pos.x..=max_pos.x {
-            if positions.contains_key(&Pos { x, y }) {
+            if positions.contains(&Pos { x, y }) {
                 print!("#");
             } else {
                 print!(".");
@@ -187,42 +182,37 @@ fn print_positions<T>(positions: &HashMap<Pos, T>) {
     }
 }
 
-fn get_empty_positions<T>(positions: &HashMap<Pos, T>) -> usize {
+fn get_empty_positions(positions: &HashSet<Pos>) -> usize {
     let (lower_left, upper_right) = get_bounding_box(positions);
-    let mut res = 0;
-    for x in lower_left.x..=upper_right.x {
-        for y in lower_left.y..=upper_right.y {
-            if !positions.contains_key(&Pos { x, y }) {
-                res += 1;
-            }
-        }
-    }
-    res
+    (lower_left.x..=upper_right.x)
+        .map(|x| {
+            (lower_left.y..=upper_right.y)
+                .filter(|y| !positions.contains(&Pos { x, y: *y }))
+                .count()
+        })
+        .sum()
 }
 
-fn get_elves_positions(input: &str) -> HashMap<Pos, Option<Pos>> {
-    let mut positions = HashMap::new();
-    input.lines().enumerate().for_each(|(y, line)| {
-        line.chars()
-            .enumerate()
-            .filter(|(_, c)| c == &'#')
-            .for_each(|(x, _)| {
-                positions.insert(
-                    Pos {
-                        x: x as isize,
-                        y: y as isize,
-                    },
-                    None,
-                );
-            });
-    });
-    positions
+fn get_elves_positions(input: &str) -> HashSet<Pos> {
+    input
+        .lines()
+        .enumerate()
+        .flat_map(|(y, line)| {
+            line.chars()
+                .enumerate()
+                .filter(|(_, c)| c == &'#')
+                .map(move |(x, _)| Pos {
+                    x: x as isize,
+                    y: y as isize,
+                })
+        })
+        .collect()
 }
 
 pub fn solution() {
     let input = std::fs::read_to_string("data/day23.txt").unwrap();
     let mut elves = get_elves_positions(&input);
-    simulate(10, &mut elves, 0);
+    simulate(Some(10), &mut elves, Dir::North);
     println!(
         "Empty positions after 10 iterations: {}",
         get_empty_positions(&elves)
@@ -230,6 +220,6 @@ pub fn solution() {
     let mut elves = get_elves_positions(&input);
     println!(
         "Number iterations before steady state: {}",
-        simulate(usize::MAX, &mut elves, 0)
+        simulate(None, &mut elves, Dir::North)
     );
 }
