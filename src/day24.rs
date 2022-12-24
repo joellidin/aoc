@@ -1,12 +1,18 @@
-use std::{collections::HashSet, fmt::Debug};
+use std::fmt::Debug;
 
-#[derive(Clone)]
+const MAX_ROWS: usize = 32;
+
 struct Grid {
-    width: isize,
-    height: isize,
-    start: Pos,
-    goal: Pos,
-    blizzard: Vec<(Pos, Pos)>,
+    width: usize,
+    height: usize,
+    walls: [u128; MAX_ROWS],
+    start: (usize, u128),
+    goal: (usize, u128),
+    bliz_north: [u128; MAX_ROWS],
+    bliz_south: [u128; MAX_ROWS],
+    bliz_west: [u128; MAX_ROWS],
+    bliz_east: [u128; MAX_ROWS],
+    presence: [u128; MAX_ROWS],
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -18,41 +24,39 @@ struct Pos {
 impl Debug for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f)?;
-        for x in 0..self.width {
-            if self.start.x == x {
-                write!(f, ".")?;
-            } else {
-                write!(f, "#")?;
-            }
-        }
-        writeln!(f)?;
-        for y in 1..self.height - 1 {
-            write!(f, "#")?;
-            for x in 1..self.width - 1 {
-                let pos = Pos { x, y };
-                let count = self.blizzard.iter().filter(|(p, _)| *p == pos).count();
-                if count > 1 {
-                    write!(f, "{count}")?;
-                } else if self.blizzard.contains(&(pos, Pos { x: 1, y: 0 })) {
-                    write!(f, ">")?;
-                } else if self.blizzard.contains(&(pos, Pos { x: 0, y: 1 })) {
-                    write!(f, "v")?;
-                } else if self.blizzard.contains(&(pos, Pos { x: -1, y: 0 })) {
-                    write!(f, "<")?;
-                } else if self.blizzard.contains(&(pos, Pos { x: 0, y: -1 })) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                // Count number of blizzards at this position
+                let mut blizzards = 0;
+                if self.bliz_north[y] & (1 << x) != 0 {
+                    blizzards += 1;
+                }
+                if self.bliz_south[y] & (1 << x) != 0 {
+                    blizzards += 1;
+                }
+                if self.bliz_west[y] & (1 << x) != 0 {
+                    blizzards += 1;
+                }
+                if self.bliz_east[y] & (1 << x) != 0 {
+                    blizzards += 1;
+                }
+                if blizzards > 1 {
+                    write!(f, "{blizzards}")?;
+                } else if self.walls[y] & (1 << x) != 0 {
+                    write!(f, "#")?;
+                } else if self.bliz_north[y] & (1 << x) != 0 {
                     write!(f, "^")?;
+                } else if self.bliz_south[y] & (1 << x) != 0 {
+                    write!(f, "v")?;
+                } else if self.bliz_west[y] & (1 << x) != 0 {
+                    write!(f, "<")?;
+                } else if self.bliz_east[y] & (1 << x) != 0 {
+                    write!(f, ">")?;
                 } else {
                     write!(f, ".")?;
                 }
             }
-            writeln!(f, "#")?;
-        }
-        for x in 0..self.width {
-            if self.goal.x == x {
-                write!(f, ".")?;
-            } else {
-                write!(f, "#")?;
-            }
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -60,124 +64,125 @@ impl Debug for Grid {
 
 impl Grid {
     fn new(input: &str) -> Self {
-        let height = input.lines().count() as isize;
-        let width = input.lines().next().unwrap().len() as isize;
-        let start = Pos {
-            x: input
-                .lines()
-                .next()
-                .map(|line| line.find('.').unwrap())
-                .unwrap() as isize,
-            y: 0,
-        };
-        let goal = Pos {
-            x: input
-                .lines()
-                .rev()
-                .next()
-                .map(|line| line.find('.').unwrap())
-                .unwrap() as isize,
-            y: height - 1,
-        };
-        let mut blizzard = Vec::new();
+        let width = input.lines().next().unwrap().len();
+        let height = input.lines().count();
+        let mut start: (usize, u128) = (0, 0);
+        let mut goal: (usize, u128) = (height - 1, 0);
+        let mut presence = [0u128; MAX_ROWS];
+        let mut walls = [0u128; MAX_ROWS];
+        let mut bliz_north = [0u128; MAX_ROWS];
+        let mut bliz_south = [0u128; MAX_ROWS];
+        let mut bliz_east = [0u128; MAX_ROWS];
+        let mut bliz_west = [0u128; MAX_ROWS];
+
         input.lines().enumerate().for_each(|(y, line)| {
             line.chars().enumerate().for_each(|(x, c)| {
-                let (x, y) = (x as isize, y as isize);
                 match c {
-                    '^' => blizzard.push((Pos { x, y }, Pos { x: 0, y: -1 })),
-                    'v' => blizzard.push((Pos { x, y }, Pos { x: 0, y: 1 })),
-                    '<' => blizzard.push((Pos { x, y }, Pos { x: -1, y: 0 })),
-                    '>' => blizzard.push((Pos { x, y }, Pos { x: 1, y: 0 })),
+                    '^' => bliz_north[y] |= 1 << x,
+                    'v' => bliz_south[y] |= 1 << x,
+                    '<' => bliz_west[y] |= 1 << x,
+                    '>' => bliz_east[y] |= 1 << x,
+                    '#' => walls[y] |= 1 << x,
                     _ => (),
+                };
+                if y == 0 && c == '.' {
+                    start.1 |= 1 << x;
+                }
+                if y == height - 1 && c == '.' {
+                    goal.1 |= 1 << x;
                 }
             })
         });
+        presence[start.0] = start.1;
         Grid {
             width,
             height,
+            walls,
             start,
             goal,
-            blizzard,
+            bliz_north,
+            bliz_south,
+            bliz_west,
+            bliz_east,
+            presence,
         }
     }
 
-    fn update(&mut self) {
+    fn update_blizzards(&mut self) {
         // Simulate blizzards for this turn
-        for (bliz, dir) in self.blizzard.iter_mut() {
-            bliz.x = (bliz.x + dir.x - 1).rem_euclid(self.width - 2) + 1;
-            bliz.y = (bliz.y + dir.y - 1).rem_euclid(self.height - 2) + 1;
+        self.bliz_north[1..(self.height - 1)].rotate_left(1);
+        self.bliz_south[1..(self.height - 1)].rotate_right(1);
+        for r in 1..(self.height - 1) {
+            self.bliz_west[r] = self.blow_west(self.bliz_west[r], self.walls[r]);
+            self.bliz_east[r] = self.blow_east(self.bliz_east[r], self.walls[r]);
         }
     }
 
-    fn reverse_update(&mut self) {
-        for (bliz, dir) in self.blizzard.iter_mut() {
-            bliz.x = (bliz.x - dir.x - 1).rem_euclid(self.width - 2) + 1;
-            bliz.y = (bliz.y - dir.y - 1).rem_euclid(self.height - 2) + 1;
+    fn blow_west(&self, before: u128, walls: u128) -> u128 {
+        let wind = before >> 1;
+        if wind & walls != 0 {
+            wind | (walls >> 1)
+        } else {
+            wind
         }
     }
 
-    fn is_inside(&self, pos: Pos) -> bool {
-        (pos.x > 0 && pos.x < self.width - 1 && pos.y > 0 && pos.y < self.height - 1)
-            || (self.start == pos || self.goal == pos)
+    fn blow_east(&self, row: u128, walls: u128) -> u128 {
+        let wind = row << 1;
+        if wind & walls != 0 {
+            wind | (walls << 1)
+        } else {
+            wind
+        }
     }
 
-    fn is_blizzard(&self, pos: Pos) -> bool {
-        self.blizzard.iter().any(|(p, _)| *p == pos)
-    }
-
-    fn valid_positions(&self, pos: Pos) -> Vec<Pos> {
-        let mut valid_positions = Vec::new();
-        let dirs = [
-            Pos { x: 0, y: -1 },
-            Pos { x: 0, y: 1 },
-            Pos { x: -1, y: 0 },
-            Pos { x: 1, y: 0 },
-            Pos { x: 0, y: 0 },
-        ];
-        for dir in &dirs {
-            let new_pos = Pos {
-                x: pos.x + dir.x,
-                y: pos.y + dir.y,
-            };
-            if !self.is_inside(new_pos) || self.is_blizzard(new_pos) {
-                continue;
+    fn step(&mut self) {
+        self.update_blizzards();
+        let mut above = 0;
+        for row in 0..self.height {
+            let current = self.presence[row];
+            self.presence[row] |= above | (current << 1) | (current >> 1);
+            if row + 1 < self.height {
+                self.presence[row] |= self.presence[row + 1];
             }
-            valid_positions.push(new_pos);
+            above = current;
+            let obstacle = self.walls[row]
+                | self.bliz_north[row]
+                | self.bliz_south[row]
+                | self.bliz_west[row]
+                | self.bliz_east[row];
+            self.presence[row] &= !obstacle;
         }
-        valid_positions
     }
-}
 
-fn bfs(grid: &mut Grid) -> usize {
-    let mut dist = 0;
-    let mut choices = HashSet::from_iter(vec![grid.start].into_iter());
-    'search: loop {
-        grid.update();
-        let mut new_choices = HashSet::new();
-        for pos in choices {
-            if pos == grid.goal {
-                grid.reverse_update();
-                break 'search;
-            }
+    fn is_goal(&self) -> bool {
+        self.presence[self.goal.0] & self.goal.1 != 0
+    }
 
-            for valid_pos in grid.valid_positions(pos) {
-                new_choices.insert(valid_pos);
-            }
+    fn steps_to_goal(&mut self) -> usize {
+        let mut steps = 0;
+        while !self.is_goal() {
+            self.step();
+            steps += 1;
         }
-        choices = new_choices;
-        dist += 1;
+        steps
     }
-    dist
+
+    fn reset_and_swap_goal(&mut self) {
+        std::mem::swap(&mut self.start, &mut self.goal);
+        self.presence.fill(0u128);
+        self.presence[self.start.0] = self.start.1;
+    }
 }
 
 pub fn solution() {
     let input = std::fs::read_to_string("data/day24.txt").unwrap();
     let mut grid = Grid::new(&input);
-    let first = bfs(&mut grid);
-    std::mem::swap(&mut grid.start, &mut grid.goal);
-    let second = bfs(&mut grid);
-    std::mem::swap(&mut grid.start, &mut grid.goal);
-    let third = bfs(&mut grid);
+    let first = grid.steps_to_goal();
+    grid.reset_and_swap_goal();
+    let second = grid.steps_to_goal();
+    grid.reset_and_swap_goal();
+    let third = grid.steps_to_goal();
     println!("Fewest minutes to get to the goal and avoid the blizzards {first}");
     println!(
         "Fewest minutes to go to the goal, back and to the goal again: {}",
