@@ -18,7 +18,7 @@ cargo run 3
 | Day number  | Solved             |
 | ----------- | ------------------ |
 | 1           | :heavy_check_mark: |
-| 2           |                    |
+| 2           | :heavy_check_mark: |
 | 3           |                    |
 | 4           |                    |
 | 5           |                    |
