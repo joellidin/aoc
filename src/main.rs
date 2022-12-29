@@ -12,6 +12,7 @@ mod day9;
 mod day10;
 mod day11;
 mod day12;
+mod day13;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -29,6 +30,7 @@ fn main() {
         "10" => day10::solution(),
         "11" => day11::solution(),
         "12" => day12::solution(),
+        "13" => day13::solution(),
         s => {
             let num = s.parse::<usize>().expect("Expecting a positive number");
             if num > 25 {
