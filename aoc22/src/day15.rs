@@ -75,8 +75,7 @@ impl Sensor {
 }
 
 pub fn solution() {
-    let sensors = std::fs::read_to_string("data/day15.txt")
-        .unwrap()
+    let sensors = include_str!("../data/day15.txt")
         .trim()
         .split('\n')
         .map(|line| {

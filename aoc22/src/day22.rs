@@ -300,7 +300,7 @@ fn go_through_void_cube(map: &mut Map, old_pos: Position) {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day22.txt").unwrap();
+    let input = include_str!("../data/day22.txt");
     let (map, instructions) = input.split_once("\n\n").unwrap();
     let mut map = Map::new(map);
     let i = instructions.parse::<Instructions>().unwrap();
@@ -318,7 +318,7 @@ mod test {
     use super::{Direction, Instructions, Map, Player, Position};
 
     fn get_map() -> Map {
-        let input = std::fs::read_to_string("data/day22.test").unwrap();
+        let input = include_str!("../data/day22.test");
         let (map, _) = input.split_once("\n\n").unwrap();
         Map::new(map)
     }

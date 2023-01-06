@@ -30,8 +30,7 @@ fn calculate_coordinates(data: &[isize], positions: &VecDeque<usize>) -> isize {
 }
 
 pub fn solution() {
-    let mut data = std::fs::read_to_string("data/day20.txt")
-        .unwrap()
+    let mut data = include_str!("../data/day20.txt")
         .trim()
         .split('\n')
         .map(|num| num.parse::<isize>().unwrap())

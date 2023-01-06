@@ -1,7 +1,6 @@
 pub fn solution() {
     let mut image: Vec<Vec<char>> = vec![Vec::new(); 6];
-    let res = std::fs::read_to_string("data/day10.txt")
-        .unwrap()
+    let res = include_str!("../data/day10.txt")
         .trim()
         .lines()
         .fold((1isize, 0, 0), |(register_x, signal_sum, cycle), line| {

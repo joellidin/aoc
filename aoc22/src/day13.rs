@@ -69,8 +69,7 @@ impl PartialOrd for Node {
 }
 
 pub fn solution() {
-    let pairs = std::fs::read_to_string("data/day13.txt")
-        .unwrap()
+    let pairs = include_str!("../data/day13.txt")
         .split("\n\n")
         .map(|pair| {
             pair.split_once('\n')

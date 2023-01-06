@@ -3,7 +3,7 @@ pub fn solution() {
     let mut final_dirs = vec![];
     let mut sum_directories = 0;
 
-    let input = std::fs::read_to_string("data/day7.txt").unwrap();
+    let input = include_str!("../data/day7.txt");
     input
         .trim()
         .split('\n')

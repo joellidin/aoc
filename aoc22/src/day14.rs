@@ -167,8 +167,8 @@ impl std::fmt::Debug for Cave {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day14.txt").unwrap();
-    let mut cave = Cave::new(&input, Point { x: 500, y: 0 });
+    let input = include_str!("../data/day14.txt");
+    let mut cave = Cave::new(input, Point { x: 500, y: 0 });
     cave.simulate();
     println!("Sand counter without floor: {}", cave.sand_counter);
     cave.add_floor();

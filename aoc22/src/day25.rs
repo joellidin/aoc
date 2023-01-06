@@ -63,8 +63,7 @@ fn to_snafu(base_10: isize) -> String {
 pub fn solution() {
     println!(
         "We supply {} to Bob's console.",
-        std::fs::read_to_string("data/day25.txt")
-            .unwrap()
+        include_str!("../data/day25.txt")
             .lines()
             .map(|l| l.parse::<Snafu>().unwrap())
             .sum::<Snafu>()

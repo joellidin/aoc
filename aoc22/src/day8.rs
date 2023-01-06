@@ -41,8 +41,7 @@ fn get_scenic_score(tree_matrix: &[Vec<u32>], row: &usize, col: &usize) -> usize
 }
 
 pub fn solution() {
-    let tree_matrix: Vec<Vec<u32>> = std::fs::read_to_string("data/day8.txt")
-        .unwrap()
+    let tree_matrix: Vec<Vec<u32>> = include_str!("../data/day8.txt")
         .trim()
         .split('\n')
         .map(|line| {

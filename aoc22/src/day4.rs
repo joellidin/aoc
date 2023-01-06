@@ -1,5 +1,5 @@
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day4.txt").unwrap();
+    let input = include_str!("../data/day4.txt");
     let lines = input.trim().split('\n');
 
     let result = lines.fold((0, 0), |acc, line| {
