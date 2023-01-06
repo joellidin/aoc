@@ -46,7 +46,7 @@ fn get_points(reindeers: &[Reindeer], time: usize) -> Vec<usize> {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day14.txt").unwrap();
+    let input = include_str!("../data/day14.txt");
     println!(
         "Distance after 2503 seconds: {}",
         input

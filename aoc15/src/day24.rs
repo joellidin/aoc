@@ -12,8 +12,7 @@ fn get_lowest_qe(nums: &Vec<u32>, parts: u32) -> Option<u64> {
     None
 }
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day24.txt")
-        .unwrap()
+    let input = include_str!("../data/day24.txt")
         .lines()
         .map(|x| x.parse::<u32>().unwrap())
         .collect::<Vec<_>>();

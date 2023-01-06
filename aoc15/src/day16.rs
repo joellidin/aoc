@@ -108,8 +108,7 @@ impl Default for Sue {
 }
 
 pub fn solution() {
-    let sues = std::fs::read_to_string("data/day16.txt")
-        .unwrap()
+    let sues = include_str!("../data/day16.txt")
         .lines()
         .map(|line| line.parse::<Sue>().unwrap())
         .collect::<Vec<_>>();

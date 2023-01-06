@@ -27,8 +27,7 @@ fn increment_password(s: &str) -> String {
 }
 
 pub fn solution() {
-    let mut curr_password = std::fs::read_to_string("data/day11.txt")
-        .unwrap()
+    let mut curr_password = include_str!("../data/day11.txt")
         .trim()
         .to_string();
     for i in 0..2 {

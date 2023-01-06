@@ -74,8 +74,7 @@ fn get_best_total_score(
 }
 
 pub fn solution() {
-    let ingridients = std::fs::read_to_string("data/day15.txt")
-        .unwrap()
+    let ingridients = include_str!("../data/day15.txt")
         .lines()
         .map(|line| line.parse::<Ingridient>().unwrap())
         .collect::<Vec<_>>();

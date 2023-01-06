@@ -1,5 +1,5 @@
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day8.txt").unwrap();
+    let input = include_str!("../data/day8.txt");
     let part1 = input.lines().fold(0, |acc, line| {
         let tot_chars = line.len();
         // Calculate the number of charcaters in memory

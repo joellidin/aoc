@@ -128,8 +128,7 @@ pub fn solution() {
 
     let mut player_stats = possible_purchase.iter();
     let mut player = Player::new(100, 0, 0);
-    let mut boss = std::fs::read_to_string("data/day21.txt")
-        .unwrap()
+    let mut boss = include_str!("../data/day21.txt")
         .parse::<Player>()
         .unwrap();
     let boss_hit_points = boss.hit_points;

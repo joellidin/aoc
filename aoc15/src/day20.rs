@@ -29,8 +29,7 @@ fn get_min_house_fast(min_num: u32, max_visits: Option<u32>, factor: u32) -> Opt
 }
 
 pub fn solution() {
-    let num = std::fs::read_to_string("data/day20.txt")
-        .unwrap()
+    let num = include_str!("../data/day20.txt")
         .trim()
         .parse::<u32>()
         .unwrap();

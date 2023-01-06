@@ -28,7 +28,7 @@ fn get_distances(graph: &HashMap<&str, HashMap<&str, usize>>) -> Vec<usize> {
 
 pub fn solution() {
     let mut routes = HashMap::new();
-    let input = std::fs::read_to_string("data/day9.txt").unwrap();
+    let input = include_str!("../data/day9.txt");
     input.lines().for_each(|line| {
         let mut parts = line.split(" = ");
         let (from, to) = parts.next().unwrap().split_once(" to ").unwrap();

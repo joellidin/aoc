@@ -1,5 +1,5 @@
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day1.txt").unwrap();
+    let input = include_str!("../data/day1.txt");
     println!(
         "The instructions takes santa to floor: {}",
         input.chars().fold(0, |acc, c| {

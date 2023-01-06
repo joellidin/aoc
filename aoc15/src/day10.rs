@@ -1,5 +1,5 @@
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day10.txt").unwrap();
+    let input = include_str!("../data/day10.txt");
     let mut chars = input.trim().chars().collect::<Vec<_>>();
     let mut res = String::new();
     (0..50).for_each(|i| {

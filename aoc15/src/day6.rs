@@ -1,7 +1,7 @@
 pub fn solution() {
     let mut grid1 = vec![vec![false; 1000]; 1000];
     let mut grid2 = vec![vec![0usize; 1000]; 1000];
-    let input = std::fs::read_to_string("data/day6.txt").unwrap();
+    let input = include_str!("../data/day6.txt");
     input.lines().for_each(|line| {
         let (part, p2) = line.split_once(" through ").unwrap();
         let (action, p1) = part.rsplit_once(' ').unwrap();

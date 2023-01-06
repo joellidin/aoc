@@ -98,8 +98,7 @@ fn run(instructions: &[Instruction], start: u32) -> u32 {
 }
 
 pub fn solution() {
-    let instructions = std::fs::read_to_string("data/day23.txt")
-        .unwrap()
+    let instructions = include_str!("../data/day23.txt")
         .lines()
         .map(|l| l.parse().unwrap())
         .collect::<Vec<Instruction>>();

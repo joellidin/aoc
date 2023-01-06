@@ -73,7 +73,7 @@ fn parse_input(input: &str) -> HashMap<String, LogicGate> {
 }
 
 pub fn solution() {
-    let mut gates = parse_input(&std::fs::read_to_string("data/day7.txt").unwrap());
+    let mut gates = parse_input(include_str!("../data/day7.txt"));
     let mut gates2 = gates.clone();
 
     let part1 = get_wire_value("a".to_owned(), &mut gates);

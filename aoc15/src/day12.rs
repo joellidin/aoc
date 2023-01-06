@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day12.txt").unwrap();
-    let v = serde_json::from_str::<serde_json::Value>(&input).unwrap();
+    let input = include_str!("../data/day12.txt");
+    let v = serde_json::from_str::<serde_json::Value>(input).unwrap();
     println!("Sum of all numbers: {}", sum_numbers(&v, ""));
     println!("Sum of all numbers without red objects: {}", sum_numbers(&v, "red"));
 }

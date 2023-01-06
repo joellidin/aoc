@@ -20,7 +20,7 @@ fn get_max_happiness(graph: &HashMap<String, HashMap<String, isize>>) -> isize {
 
 pub fn solution() {
     let mut happiness = HashMap::new();
-    let input = std::fs::read_to_string("data/day13.txt").unwrap();
+    let input = include_str!("../data/day13.txt");
     input.lines().for_each(|line| {
         let parts = line.split_whitespace().collect::<Vec<_>>();
         let name = parts[0].to_string();
