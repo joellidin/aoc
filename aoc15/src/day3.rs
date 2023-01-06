@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day3.txt").unwrap();
+    let input = include_str!("../data/day3.txt");
     let mut seen_houses = HashSet::new();
     input.chars().fold((0, 0), |(x, y), c| {
         seen_houses.insert((x, y));

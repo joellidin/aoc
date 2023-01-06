@@ -1,5 +1,5 @@
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day2.txt").unwrap();
+    let input = include_str!("../data/day2.txt");
     let (part1, part2) = input.lines().fold((0, 0), |(acc_paper, acc_string), line| {
         let mut v = line
             .split('x')

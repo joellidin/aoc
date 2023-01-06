@@ -20,8 +20,7 @@ fn get_combinations(tot_eggnod: u16, containers: &[u16]) -> Vec<Vec<u16>> {
 }
 
 pub fn solution() {
-    let containers = std::fs::read_to_string("data/day17.txt")
-        .unwrap()
+    let containers = include_str!("../data/day17.txt")
         .trim()
         .lines()
         .map(|line| line.parse().unwrap())

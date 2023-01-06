@@ -35,8 +35,7 @@ fn update_lights(lights: &mut [Vec<bool>], corners_on: bool) {
 }
 
 pub fn solution() {
-    let mut lights = std::fs::read_to_string("data/day18.txt")
-        .unwrap()
+    let mut lights = include_str!("../data/day18.txt")
         .lines()
         .map(|line| line.chars().map(|c| matches!(c, '#')).collect())
         .collect::<Vec<Vec<_>>>();

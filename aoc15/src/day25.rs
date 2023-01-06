@@ -9,7 +9,7 @@ fn find_num(row: u64, col: u64) -> u64 {
     num
 }
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day25.txt").unwrap();
+    let input = include_str!("../data/day25.txt");
     let row = input
         .split("row ")
         .nth(1)

@@ -1,7 +1,7 @@
 use md5::{Digest, Md5};
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day4.txt").unwrap();
+    let input = include_str!("../data/day4.txt");
     let mut part1_done = false;
     let mut hasher = Md5::new();
     for i in 0.. {

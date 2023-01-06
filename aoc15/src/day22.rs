@@ -305,8 +305,7 @@ fn dijkstras(boss: &Boss, player: &Player, spell_book: &SpellBook, hard_mode: bo
 }
 
 pub fn solution() {
-    let boss = std::fs::read_to_string("data/day22.txt")
-        .unwrap()
+    let boss = include_str!("../data/day22.txt")
         .parse::<Boss>()
         .unwrap();
     let player = Player::default();

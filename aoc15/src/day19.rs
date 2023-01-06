@@ -43,8 +43,8 @@ fn backtrack(molecule: &str, replacement_rules: &[(&str, &str)], target: &str) -
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day19.txt").unwrap();
-    let (replacement_rules, molecule) = parse_input(&input);
+    let input = include_str!("../data/day19.txt");
+    let (replacement_rules, molecule) = parse_input(input);
 
     println!(
         "We can create {} distinct molecules",

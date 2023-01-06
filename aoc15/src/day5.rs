@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day5.txt").unwrap();
+    let input = include_str!("../data/day5.txt");
     println!(
         "Part 1 has {} nice strings",
         input.lines().fold(0, |acc, line| {
