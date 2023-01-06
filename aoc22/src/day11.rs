@@ -109,8 +109,7 @@ impl FromStr for Monkey {
     }
 }
 pub fn solution() {
-    let mut monkeys = std::fs::read_to_string("data/day11.txt")
-        .unwrap()
+    let mut monkeys = include_str!("../data/day11.txt")
         .split("\n\n")
         .map(|monkey| monkey.parse::<Monkey>().unwrap())
         .collect::<Vec<_>>();
@@ -128,8 +127,7 @@ pub fn solution() {
     }
     processed_items.sort_by(|a, b| b.cmp(a));
 
-    let mut monkeys = std::fs::read_to_string("data/day11.txt")
-        .unwrap()
+    let mut monkeys = include_str!("../data/day11.txt")
         .split("\n\n")
         .map(|monkey| monkey.parse::<Monkey>().unwrap())
         .collect::<Vec<_>>();

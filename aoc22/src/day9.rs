@@ -24,7 +24,7 @@ fn update_positions(knots: &mut [(isize, isize)], tail_set: &mut [HashSet<(isize
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day9.txt").unwrap();
+    let input = include_str!("../data/day9.txt");
     let mut knots = vec![(0, 0); 10];
     let mut tails_set = vec![HashSet::new(); 10];
     for line in input.trim().lines() {

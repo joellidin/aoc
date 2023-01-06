@@ -133,8 +133,7 @@ impl BoundingBox {
 
 fn parse_points() -> HashSet<Point> {
     let mut points = HashSet::new();
-    std::fs::read_to_string("data/day18.txt")
-        .unwrap()
+    include_str!("../data/day18.txt")
         .trim()
         .split('\n')
         .map(|line| {

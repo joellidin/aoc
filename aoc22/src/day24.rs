@@ -176,8 +176,8 @@ impl Grid {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day24.txt").unwrap();
-    let mut grid = Grid::new(&input);
+    let input = include_str!("../data/day24.txt");
+    let mut grid = Grid::new(input);
     let first = grid.steps_to_goal();
     grid.reset_and_swap_goal();
     let second = grid.steps_to_goal();

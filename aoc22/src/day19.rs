@@ -161,8 +161,7 @@ fn simulate(blueprint: &Blueprint, time: usize) -> usize {
 }
 
 pub fn solution() {
-    let blueprints = std::fs::read_to_string("data/day19.txt")
-        .unwrap()
+    let blueprints = include_str!("../data/day19.txt")
         .trim()
         .split('\n')
         .map(|bp| bp.parse::<Blueprint>().unwrap())

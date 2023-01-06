@@ -70,7 +70,7 @@ impl Dock {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day5.txt").unwrap();
+    let input = include_str!("../data/day5.txt");
     let (stacks, instructions): (&str, &str) = input.split_once("\n\n").unwrap();
     let mut stacks: Dock = stacks.parse().unwrap();
     let mut stacks2 = stacks.clone();

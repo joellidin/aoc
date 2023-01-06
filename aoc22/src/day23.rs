@@ -210,14 +210,14 @@ fn get_elves_positions(input: &str) -> HashSet<Pos> {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day23.txt").unwrap();
-    let mut elves = get_elves_positions(&input);
+    let input = include_str!("../data/day23.txt");
+    let mut elves = get_elves_positions(input);
     simulate(Some(10), &mut elves, Dir::North);
     println!(
         "Empty positions after 10 iterations: {}",
         get_empty_positions(&elves)
     );
-    let mut elves = get_elves_positions(&input);
+    let mut elves = get_elves_positions(input);
     println!(
         "Number iterations before steady state: {}",
         simulate(None, &mut elves, Dir::North)

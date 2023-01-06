@@ -85,7 +85,7 @@ fn test_equality(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> usize {
 
 pub fn solution() {
     let mut monkeys = HashMap::new();
-    let input = std::fs::read_to_string("data/day21.txt").unwrap();
+    let input = include_str!("../data/day21.txt");
     let _ = &input
         .trim()
         .split('\n')

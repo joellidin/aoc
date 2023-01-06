@@ -193,7 +193,7 @@ fn bfs2(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> 
 
 pub fn solution() {
     let mut valves = HashMap::new();
-    let input = std::fs::read_to_string("data/day16.txt").unwrap();
+    let input = include_str!("../data/day16.txt");
     input
         .trim_end()
         .split('\n')

@@ -20,13 +20,13 @@ fn get_marker(n_unique: usize, input: &str) -> usize {
 }
 
 pub fn solution() {
-    let input = std::fs::read_to_string("data/day6.txt").unwrap();
+    let input = include_str!("../data/day6.txt");
     println!(
         "You need to process {} character before you get 4 unique chars",
-        get_marker(4, &input)
+        get_marker(4, input)
     );
     println!(
         "You need to process {} character before you get 14 unique chars",
-        get_marker(14, &input)
+        get_marker(14, input)
     );
 }

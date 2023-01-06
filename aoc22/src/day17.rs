@@ -206,7 +206,7 @@ fn simulate<'a>(
 }
 
 pub fn solution() {
-    let pattern = std::fs::read_to_string("data/day17.txt").unwrap();
+    let pattern = include_str!("../data/day17.txt");
     let mut stream = pattern.trim().chars().enumerate().cycle();
     let mut rocks = Shape::ORDER.iter().enumerate().cycle();
     println!(

@@ -26,8 +26,7 @@ fn djikstra(end: (usize, usize), heightmap: &[Vec<u8>], distances: &mut [Vec<usi
 
 pub fn solution() {
     let (mut start, mut end) = ((0, 0), (0, 0));
-    let heightmap = std::fs::read_to_string("data/day12.txt")
-        .unwrap()
+    let heightmap = include_str!("../data/day12.txt")
         .trim()
         .split('\n')
         .enumerate()
