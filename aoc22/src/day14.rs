@@ -3,8 +3,8 @@ use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Point {
-    x: isize,
-    y: isize,
+    x: i32,
+    y: i32,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -17,15 +17,15 @@ enum Tile {
 struct Cave {
     map: HashMap<Point, Tile>,
     source: Point,
-    floor: usize,
-    sand_counter: usize,
+    floor: u32,
+    sand_counter: u32,
 }
 
 impl FromStr for Point {
     type Err = std::convert::Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let point: Vec<isize> = s.split(',').map(|s| s.trim().parse().unwrap()).collect();
+        let point: Vec<i32> = s.split(',').map(|s| s.trim().parse().unwrap()).collect();
         Ok(Point {
             x: point[0],
             y: point[1],
@@ -83,7 +83,7 @@ impl Cave {
                 prev_point = new_point;
             }
         }
-        let floor = (highest_y + 2) as usize;
+        let floor = (highest_y + 2) as u32;
         Cave {
             map,
             source,
@@ -96,7 +96,7 @@ impl Cave {
         let mut current_point = self.source;
         let mut stack = vec![current_point];
         loop {
-            if current_point.y >= self.floor as isize
+            if current_point.y >= self.floor as i32
                 || self.map.get(&self.source) == Some(&Tile::Sand)
             {
                 break;
@@ -118,7 +118,7 @@ impl Cave {
         }
     }
 
-    fn get_move(&self, point: Point) -> Option<(isize, isize)> {
+    fn get_move(&self, point: Point) -> Option<(i32, i32)> {
         for (dx, dy) in [(0, 1), (-1, 1), (1, 1)] {
             let new_point = Point {
                 x: point.x + dx,
@@ -135,8 +135,8 @@ impl Cave {
         for i in 500 - self.floor..=500 + self.floor {
             self.map.insert(
                 Point {
-                    x: i as isize,
-                    y: self.floor as isize,
+                    x: i as i32,
+                    y: self.floor as i32,
                 },
                 Tile::Rock,
             );
@@ -147,8 +147,8 @@ impl Cave {
 impl std::fmt::Debug for Cave {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut string = String::new();
-        for j in 0..self.floor as isize + 2 {
-            for i in -(self.floor as isize) - 3..=self.floor as isize + 3 {
+        for j in 0..self.floor as i32 + 2 {
+            for i in -(self.floor as i32) - 3..=self.floor as i32 + 3 {
                 let point = Point { x: i + 500, y: j };
                 if point == self.source && self.map.get(&point).is_none() {
                     string.push('+');
@@ -166,12 +166,15 @@ impl std::fmt::Debug for Cave {
     }
 }
 
-pub fn solution() {
-    let input = include_str!("../data/day14.txt");
+pub fn part_1(input: &str) -> u32 {
     let mut cave = Cave::new(input, Point { x: 500, y: 0 });
     cave.simulate();
-    println!("Sand counter without floor: {}", cave.sand_counter);
+    cave.sand_counter
+}
+
+pub fn part_2(input: &str) -> u32 {
+    let mut cave = Cave::new(input, Point { x: 500, y: 0 });
     cave.add_floor();
     cave.simulate();
-    println!("Sand counter with floor: {}", cave.sand_counter);
+    cave.sand_counter
 }

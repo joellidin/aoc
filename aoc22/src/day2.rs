@@ -1,7 +1,4 @@
 use std::cmp::Ordering;
-use std::fs::File;
-use std::io::prelude::BufRead;
-use std::io::BufReader;
 use std::str::FromStr;
 use Shape::*;
 
@@ -62,11 +59,8 @@ impl Shape {
     }
 }
 
-pub fn solution() {
-    let file = File::open("data/day2.txt").unwrap();
-    let reader = BufReader::new(file);
-    let result: u32 = reader.lines().fold(0, |acc, line| {
-        let line = line.unwrap();
+pub fn part_1(input: &str) -> u32 {
+    input.lines().fold(0, |acc, line| {
         let (a, b) = line.split_once(' ').unwrap();
         let (a, b) = (Shape::from_str(a).unwrap(), Shape::from_str(b).unwrap());
         let score = if a < b {
@@ -77,14 +71,11 @@ pub fn solution() {
             0
         };
         acc + u32::from(b) + score
-    });
-    println!("The total score is {result}");
+    })
+}
 
-    // Part 2
-    let file = File::open("data/day2.txt").unwrap();
-    let reader = BufReader::new(file);
-    let result: u32 = reader.lines().fold(0, |acc, line| {
-        let line = line.unwrap();
+pub fn part_2(input: &str) -> u32 {
+    input.lines().fold(0, |acc, line| {
         let (a, b) = line.split_once(' ').unwrap();
         let a = Shape::from_str(a).unwrap();
         let score = match b {
@@ -94,6 +85,5 @@ pub fn solution() {
             _ => panic!("NO MATCH"),
         };
         acc + score
-    });
-    println!("The total score is (part2) {result}")
+    })
 }

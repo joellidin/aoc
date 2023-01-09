@@ -1,8 +1,8 @@
 use std::str::FromStr;
 #[derive(PartialEq, Eq)]
-enum Node {
+pub enum Node {
     List(Vec<Node>),
-    Leaf(usize),
+    Leaf(u32),
 }
 
 impl FromStr for Node {
@@ -30,14 +30,14 @@ impl FromStr for Node {
                         match number {
                             '0'..='9' => n = n * 10 + number.to_digit(10).unwrap(),
                             ']' => {
-                                current_list.push(Node::Leaf(n as usize));
+                                current_list.push(Node::Leaf(n));
                                 let mut node = stack.pop().unwrap();
                                 node.push(Node::List(current_list));
                                 current_list = node;
                                 break;
                             }
                             ',' => {
-                                current_list.push(Node::Leaf(n as usize));
+                                current_list.push(Node::Leaf(n));
                                 break;
                             }
                             _ => unreachable!(),
@@ -68,8 +68,8 @@ impl PartialOrd for Node {
     }
 }
 
-pub fn solution() {
-    let pairs = include_str!("../data/day13.txt")
+pub fn generator(input: &str) -> Vec<(Node, Node)> {
+    input
         .split("\n\n")
         .map(|pair| {
             pair.split_once('\n')
@@ -81,19 +81,20 @@ pub fn solution() {
                 })
                 .unwrap()
         })
-        .collect::<Vec<_>>();
+        .collect()
+}
 
-    // Part 1
-    let sum_pairs = pairs
+pub fn part_1(input: &[(Node, Node)]) -> u32 {
+    input
         .iter()
         .enumerate()
         .filter(|(_, (left, right))| left < right)
-        .map(|(i, _)| i + 1)
-        .sum::<usize>();
-    println!("Sum of par indices that have the right order: {sum_pairs}");
+        .map(|(i, _)| i as u32 + 1)
+        .sum()
+}
 
-    // Part 2
-    let mut nodes = pairs
+pub fn part_2(input: &[(Node, Node)]) -> u32 {
+    let mut nodes = input
         .iter()
         .flat_map(|(left, right)| vec![left, right])
         .collect::<Vec<_>>();
@@ -104,5 +105,5 @@ pub fn solution() {
     nodes.sort_unstable();
     let i_2 = nodes.iter().position(|node| node == &&node_2).unwrap() + 1;
     let i_6 = nodes.iter().position(|node| node == &&node_6).unwrap() + 1;
-    println!("Decoder key: {}", i_2 * i_6);
+    i_2 as u32 * i_6 as u32
 }

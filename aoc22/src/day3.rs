@@ -1,14 +1,7 @@
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::prelude::BufRead;
-use std::io::BufReader;
 
-pub fn solution() {
-    // Part 1
-    let file = File::open("data/day3.txt").unwrap();
-    let reader = BufReader::new(file);
-    let result = reader.lines().fold(0, |acc, line| {
-        let line = line.unwrap();
+pub fn part_1(input: &str) -> u32 {
+    input.lines().fold(0, |acc, line| {
         let char_count = &line.chars().count();
         let mut first_compartment_set = HashSet::new();
         let mut score = 0;
@@ -25,17 +18,13 @@ pub fn solution() {
             }
         }
         acc + score
-    });
-    println!("The sum of priorities are: {result}");
+    })
+}
 
-    // Part 2
-    let file = File::open("data/day3.txt").unwrap();
-    let reader = BufReader::new(file);
-
+pub fn part_2(input: &str) -> u32 {
     let mut i: u8 = 0;
     let mut intersection_set = HashSet::new();
-    let result = reader.lines().fold(0, |acc, line| {
-        let line = line.unwrap();
+    input.lines().fold(0, |acc, line| {
         let mut score = 0;
         if i == 0 {
             intersection_set = line.chars().collect();
@@ -55,6 +44,5 @@ pub fn solution() {
             i = 0;
         }
         acc + score
-    });
-    println!("The sum of priorities for the group is (part 2): {result}");
+    })
 }

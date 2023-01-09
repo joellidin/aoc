@@ -69,23 +69,28 @@ impl Dock {
     }
 }
 
-pub fn solution() {
-    let input = include_str!("../data/day5.txt");
-    let (stacks, instructions): (&str, &str) = input.split_once("\n\n").unwrap();
-    let mut stacks: Dock = stacks.parse().unwrap();
-    let mut stacks2 = stacks.clone();
+pub fn generator(input: &str) -> (&str, &str) {
+    let (stacks_str, instructions): (&str, &str) = input.split_once("\n\n").unwrap();
+    (stacks_str, instructions)
+}
 
+pub fn part_1(input: &(&str, &str)) -> String {
+    let (stack_str, instructions) = input;
+    let mut stacks = stack_str.parse::<Dock>().unwrap();
     stacks.use_crate_mover_9000(instructions);
     let mut result = "".to_owned();
     for i in 0..stacks.stacks.len() {
         result = result + &stacks.stacks[i].pop().unwrap().to_string();
     }
-    println!("The top crates are (part 1): {result}");
-
-    stacks2.use_crate_mover_9001(instructions);
+    result
+}
+pub fn part_2(input: &(&str, &str)) -> String {
+    let (stack_str, instructions) = input;
+    let mut stacks = stack_str.parse::<Dock>().unwrap();
+    stacks.use_crate_mover_9001(instructions);
     let mut result = "".to_owned();
-    for i in 0..stacks2.stacks.len() {
-        result = result + &stacks2.stacks[i].pop().unwrap().to_string();
+    for i in 0..stacks.stacks.len() {
+        result = result + &stacks.stacks[i].pop().unwrap().to_string();
     }
-    println!("The top crates are (part 2): {result}");
+    result
 }

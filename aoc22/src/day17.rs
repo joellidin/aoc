@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
 struct Point {
-    x: usize,
-    y: usize,
+    x: u64,
+    y: u64,
 }
 
 enum Shape {
@@ -62,7 +62,7 @@ impl Shape {
         .into_iter()
     }
 
-    fn width(&self) -> usize {
+    fn width(&self) -> u64 {
         match self {
             Shape::Horizontal => 4,
             Shape::Plus => 3,
@@ -72,7 +72,7 @@ impl Shape {
         }
     }
 
-    fn height(&self) -> usize {
+    fn height(&self) -> u64 {
         match self {
             Shape::Horizontal => 1,
             Shape::Plus => 3,
@@ -83,7 +83,8 @@ impl Shape {
     }
 
     fn is_colliding(&self, point: &Point, cave: &[Vec<bool>]) -> bool {
-        self.get_rocks(point).any(|Point { x, y }| cave[y][x])
+        self.get_rocks(point)
+            .any(|Point { x, y }| cave[y as usize][x as usize])
     }
 
     fn move_from_stream(&self, point: &Point, direction: char, cave: &[Vec<bool>]) -> Point {
@@ -107,7 +108,7 @@ impl Shape {
 
     fn place_rock(&self, point: &Point, cave: &mut [Vec<bool>]) {
         self.get_rocks(point).for_each(|Point { x, y }| {
-            cave[y][x] = true;
+            cave[y as usize][x as usize] = true;
         })
     }
 }
@@ -116,8 +117,8 @@ fn drop_rock<'a>(
     rock: &mut impl Iterator<Item = (usize, &'a Shape)>,
     stream: &mut impl Iterator<Item = (usize, char)>,
     cave: &mut [Vec<bool>],
-    drop_height: usize,
-) -> (usize, usize, usize) {
+    drop_height: u64,
+) -> (usize, usize, u64) {
     let mut point = Point {
         x: 2,
         y: drop_height + 3,
@@ -148,16 +149,16 @@ fn drop_rock<'a>(
 
 // This state struct I saw somewhere on reddit
 #[derive(Hash, Clone, Copy, PartialEq, Eq, Debug)]
-struct State([usize; 7], usize, usize);
+struct State([u64; 7], usize, usize);
 
 impl State {
-    fn ceiling_map(cave: &[Vec<bool>], height: usize) -> [usize; 7] {
+    fn ceiling_map(cave: &[Vec<bool>], height: u64) -> [u64; 7] {
         let mut result = [0; 7];
         for (idx, h) in (0..7)
             .map(|x| {
                 let mut height = height;
                 let mut count = 0;
-                while !cave[height][x] {
+                while !cave[height as usize][x] {
                     height -= 1;
                     count += 1;
                 }
@@ -173,14 +174,14 @@ impl State {
 }
 
 fn simulate<'a>(
-    n_rocks: usize,
+    n_rocks: u64,
     stream: &mut impl Iterator<Item = (usize, char)>,
     rocks: &mut impl Iterator<Item = (usize, &'a Shape)>,
-) -> usize {
-    let mut cave = vec![vec![false; 7]; (4 * n_rocks).min(250_000)];
+) -> u64 {
+    let mut cave = vec![vec![false; 7]; (4 * n_rocks).min(250_000) as usize];
     (0..7).for_each(|x| cave[0][x] = true);
     let mut height = 1;
-    let mut state_map: HashMap<State, (usize, usize)> = HashMap::new();
+    let mut state_map: HashMap<State, (u64, u64)> = HashMap::new();
     for i in 0..n_rocks {
         let (rock_idx, stream_idx, new_height) = drop_rock(rocks, stream, &mut cave, height);
         height = new_height;
@@ -205,18 +206,28 @@ fn simulate<'a>(
     height - 1
 }
 
-pub fn solution() {
-    let pattern = include_str!("../data/day17.txt");
-    let mut stream = pattern.trim().chars().enumerate().cycle();
+pub fn part_1(input: &str) -> u64 {
+    let mut stream = input.trim().chars().enumerate().cycle();
     let mut rocks = Shape::ORDER.iter().enumerate().cycle();
-    println!(
-        "After 2022 rocks the tower will be {} units tall",
-        simulate(2022, &mut stream, &mut rocks)
-    );
-    let mut stream = pattern.trim().chars().enumerate().cycle();
-    let mut rocks = Shape::ORDER.iter().enumerate().cycle();
-    println!(
-        "After 1e12 rocks the tower will be {} units tall",
-        simulate(1_000_000_000_000, &mut stream, &mut rocks,)
-    );
+    simulate(2022, &mut stream, &mut rocks)
 }
+
+pub fn part_2(input: &str) -> u64 {
+    let mut stream = input.trim().chars().enumerate().cycle();
+    let mut rocks = Shape::ORDER.iter().enumerate().cycle();
+    simulate(1_000_000_000_000, &mut stream, &mut rocks)
+}
+
+// pub fn solution() {
+//     let pattern = include_str!("../data/day17.txt");
+//     println!(
+//         "After 2022 rocks the tower will be {} units tall",
+//         simulate(2022, &mut stream, &mut rocks)
+//     );
+//     let mut stream = pattern.trim().chars().enumerate().cycle();
+//     let mut rocks = Shape::ORDER.iter().enumerate().cycle();
+//     println!(
+//         "After 1e12 rocks the tower will be {} units tall",
+//         simulate(1_000_000_000_000, &mut stream, &mut rocks,)
+//     );
+// }

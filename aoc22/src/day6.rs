@@ -19,14 +19,11 @@ fn get_marker(n_unique: usize, input: &str) -> usize {
         + n_unique
 }
 
-pub fn solution() {
-    let input = include_str!("../data/day6.txt");
-    println!(
-        "You need to process {} character before you get 4 unique chars",
-        get_marker(4, input)
-    );
-    println!(
-        "You need to process {} character before you get 14 unique chars",
-        get_marker(14, input)
-    );
+pub fn part_1(input: &str) -> usize {
+    get_marker(4, input)
 }
+
+pub fn part_2(input: &str) -> usize {
+    get_marker(14, input)
+}
+

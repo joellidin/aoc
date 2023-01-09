@@ -2,11 +2,11 @@ use std::collections::{HashSet, VecDeque};
 use std::str::FromStr;
 
 #[derive(Debug)]
-struct Blueprint {
-    ore_cost: usize,
-    clay_cost: usize,
-    obsidian_cost: (usize, usize),
-    geode_cost: (usize, usize),
+pub struct Blueprint {
+    ore_cost: u32,
+    clay_cost: u32,
+    obsidian_cost: (u32, u32),
+    geode_cost: (u32, u32),
 }
 
 impl FromStr for Blueprint {
@@ -16,7 +16,7 @@ impl FromStr for Blueprint {
         let nums = s
             .trim()
             .split(' ')
-            .filter_map(|x| x.parse::<usize>().ok())
+            .filter_map(|x| x.parse::<u32>().ok())
             .collect::<Vec<_>>();
         Ok(Blueprint {
             ore_cost: nums[0],
@@ -45,18 +45,18 @@ impl Blueprint {
 
 #[derive(Default, Hash, PartialEq, Eq, Clone, Copy)]
 struct Backpack {
-    ore: usize,
-    clay: usize,
-    obsidian: usize,
-    geode: usize,
+    ore: u32,
+    clay: u32,
+    obsidian: u32,
+    geode: u32,
 }
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
 struct Robots {
-    ore: usize,
-    clay: usize,
-    obsidian: usize,
-    geode: usize,
+    ore: u32,
+    clay: u32,
+    obsidian: u32,
+    geode: u32,
 }
 
 impl Robots {
@@ -79,7 +79,7 @@ impl Default for Robots {
     }
 }
 
-fn simulate(blueprint: &Blueprint, time: usize) -> usize {
+fn simulate(blueprint: &Blueprint, time: u32) -> u32 {
     let mut state_map = HashSet::new();
     let backpack = Backpack::default();
     let robots = Robots::default();
@@ -160,26 +160,24 @@ fn simulate(blueprint: &Blueprint, time: usize) -> usize {
     max_geodes
 }
 
-pub fn solution() {
-    let blueprints = include_str!("../data/day19.txt")
+pub fn generator(input: &str) -> Vec<Blueprint> {
+    input
         .trim()
         .split('\n')
         .map(|bp| bp.parse::<Blueprint>().unwrap())
-        .collect::<Vec<_>>();
+        .collect()
+}
 
-    println!(
-        "Quality level of all blueprints: {}",
-        blueprints
-            .iter()
-            .enumerate()
-            .fold(0, |acc, (i, bp)| { acc + (i + 1) * simulate(bp, 24) })
-    );
+pub fn part_1(input: &[Blueprint]) -> u32 {
+    input
+        .iter()
+        .enumerate()
+        .fold(0, |acc, (i, bp)| acc + (i as u32 + 1) * simulate(bp, 24))
+}
 
-    println!(
-        "Quality level of all blueprints: {}",
-        blueprints
-            .iter()
-            .take(3)
-            .fold(1, |factor, bp| { factor * simulate(bp, 32) })
-    );
+pub fn part_2(input: &[Blueprint]) -> u32 {
+    input
+        .iter()
+        .take(3)
+        .fold(1, |factor, bp| factor * simulate(bp, 32))
 }

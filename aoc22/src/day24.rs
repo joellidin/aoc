@@ -159,7 +159,7 @@ impl Grid {
         self.presence[self.goal.0] & self.goal.1 != 0
     }
 
-    fn steps_to_goal(&mut self) -> usize {
+    fn steps_to_goal(&mut self) -> u16 {
         let mut steps = 0;
         while !self.is_goal() {
             self.step();
@@ -175,17 +175,17 @@ impl Grid {
     }
 }
 
-pub fn solution() {
-    let input = include_str!("../data/day24.txt");
+pub fn part_1(input: &str) -> u16 {
+    let mut grid = Grid::new(input);
+    grid.steps_to_goal()
+}
+
+pub fn part_2(input: &str) -> u16 {
     let mut grid = Grid::new(input);
     let first = grid.steps_to_goal();
     grid.reset_and_swap_goal();
     let second = grid.steps_to_goal();
     grid.reset_and_swap_goal();
     let third = grid.steps_to_goal();
-    println!("Fewest minutes to get to the goal and avoid the blizzards {first}");
-    println!(
-        "Fewest minutes to go to the goal, back and to the goal again: {}",
-        first + second + third
-    );
+    first + second + third
 }

@@ -17,7 +17,7 @@ struct Beacon {
 }
 
 #[derive(Debug)]
-struct Sensor {
+pub struct Sensor {
     location: Point,
     beacon: Beacon,
     beacon_distance: usize,
@@ -74,10 +74,10 @@ impl Sensor {
     }
 }
 
-pub fn solution() {
-    let sensors = include_str!("../data/day15.txt")
+pub fn generator(input: &str) -> Vec<Sensor> {
+    input
         .trim()
-        .split('\n')
+        .lines()
         .map(|line| {
             let (sensor_x, line) = line
                 .strip_prefix("Sensor at x=")
@@ -103,17 +103,16 @@ pub fn solution() {
             };
             Sensor::new(location, beacon)
         })
-        .collect::<Vec<_>>();
+        .collect()
+}
 
-    let beacons = Sensor::get_beacons(&sensors);
+pub fn part_1(input: &[Sensor]) -> u32 {
+    let beacons = Sensor::get_beacons(input);
     let y = 2_000_000;
     let mut count = 0;
     for x in -y..=3 * y {
         let position = Point { x, y };
-        if sensors
-            .iter()
-            .any(|s| s.is_within_beacon_distance(&position))
-        {
+        if input.iter().any(|s| s.is_within_beacon_distance(&position)) {
             count += 1
         }
         if beacons
@@ -123,19 +122,21 @@ pub fn solution() {
             count -= 1
         }
     }
-    println!("There are {count} positions that could contain a beacon");
+    count
+}
 
+pub fn part_2(input: &[Sensor]) -> u64 {
     let bound = 4_000_000;
-    for sensor in &sensors {
+    for sensor in input {
         for p in sensor.get_border_points() {
             if p.x < 0 || p.y < 0 || p.x > bound || p.y > bound {
                 continue;
             }
-            if sensors.iter().any(|s| s.is_within_beacon_distance(&p)) {
+            if input.iter().any(|s| s.is_within_beacon_distance(&p)) {
                 continue;
             }
-            println!("The tuning frequency is: {}", p.x * 4000000 + p.y);
-            return;
+            return p.x as u64 * 4_000_000 + p.y as u64;
         }
     }
+    0
 }

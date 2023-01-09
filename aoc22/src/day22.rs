@@ -1,8 +1,8 @@
 use std::str::FromStr;
 use std::vec::Vec;
 
-#[derive(Debug)]
-struct Map {
+#[derive(Debug, Clone)]
+pub struct Map {
     map: Vec<Row>,
     player: Player,
 }
@@ -40,7 +40,7 @@ enum Tile {
 }
 
 #[derive(Debug)]
-struct Instructions {
+pub struct Instructions {
     instructions: Vec<Action>,
 }
 
@@ -133,7 +133,7 @@ impl Map {
     }
 }
 
-fn solve(instructions: &Instructions, map: &mut Map, warp: fn(&mut Map, Position)) -> usize {
+fn solve(instructions: &Instructions, map: &mut Map, warp: fn(&mut Map, Position)) -> u32 {
     for action in instructions.instructions.iter() {
         match action {
             Action::TurnLeft => {
@@ -173,7 +173,7 @@ fn solve(instructions: &Instructions, map: &mut Map, warp: fn(&mut Map, Position
         }
         assert!(map.map[map.player.pos.y].tiles[map.player.pos.x] == Tile::Open);
     }
-    map.player.pos.y * 1000 + map.player.pos.x * 4 + map.player.dir as usize
+    map.player.pos.y as u32 * 1000 + map.player.pos.x as u32 * 4 + map.player.dir as u32
 }
 
 fn go_through_void(map: &mut Map, old_pos: Position) {
@@ -299,18 +299,21 @@ fn go_through_void_cube(map: &mut Map, old_pos: Position) {
     }
 }
 
-pub fn solution() {
-    let input = include_str!("../data/day22.txt");
+pub fn generator(input: &str) -> (Map, Instructions) {
     let (map, instructions) = input.split_once("\n\n").unwrap();
-    let mut map = Map::new(map);
+    let map = Map::new(map);
     let i = instructions.parse::<Instructions>().unwrap();
-    let start = map.player;
-    println!("Final Password: {}", solve(&i, &mut map, go_through_void));
-    map.player = start;
-    println!(
-        "Cube Final Password: {}",
-        solve(&i, &mut map, go_through_void_cube)
-    );
+    (map, i)
+}
+
+pub fn part_1((map, instructions): &(Map, Instructions)) -> u32 {
+    let mut m = map.clone();
+    solve(instructions, &mut m, go_through_void)
+}
+
+pub fn part_2((map, instructions): &(Map, Instructions)) -> u32 {
+    let mut m = map.clone();
+    solve(instructions, &mut m, go_through_void_cube)
 }
 
 #[cfg(test)]
@@ -318,7 +321,7 @@ mod test {
     use super::{Direction, Instructions, Map, Player, Position};
 
     fn get_map() -> Map {
-        let input = include_str!("../data/day22.test");
+        let input = include_str!("../../input/2022/day22.test");
         let (map, _) = input.split_once("\n\n").unwrap();
         Map::new(map)
     }

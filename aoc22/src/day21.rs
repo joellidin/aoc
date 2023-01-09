@@ -1,8 +1,8 @@
 use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
-enum MonkeyYell {
-    Number(usize),
+pub enum MonkeyYell {
+    Number(u64),
     Operation(String),
 }
 
@@ -33,7 +33,7 @@ fn contain_humn(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> bool {
     }
 }
 
-fn get_monkey_number(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> usize {
+fn get_monkey_number(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> u64 {
     match monkeys.get(monkey).unwrap() {
         MonkeyYell::Number(n) => *n,
         MonkeyYell::Operation(s) => {
@@ -49,7 +49,7 @@ fn get_monkey_number(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> usize
     }
 }
 
-fn test_equality(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> usize {
+fn test_equality(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> u64 {
     let mut res = 0;
     if let MonkeyYell::Operation(s) = monkeys.get(monkey).unwrap() {
         let mut v = s.split(' ').collect::<Vec<_>>();
@@ -83,10 +83,9 @@ fn test_equality(monkey: &str, monkeys: &HashMap<&str, MonkeyYell>) -> usize {
     res
 }
 
-pub fn solution() {
+pub fn generator(input: &str) -> HashMap<&str, MonkeyYell> {
     let mut monkeys = HashMap::new();
-    let input = include_str!("../data/day21.txt");
-    let _ = &input
+    input
         .trim()
         .split('\n')
         .map(|line| {
@@ -94,13 +93,14 @@ pub fn solution() {
             monkeys.insert(name, monkey_yell.trim().parse::<MonkeyYell>().unwrap());
         })
         .for_each(drop);
+    monkeys
 
-    println!(
-        "The root monkey will yell {}",
-        get_monkey_number("root", &monkeys)
-    );
-    println!(
-        "We need to yell {} to pass root's equality test",
-        test_equality("root", &monkeys)
-    );
+}
+
+pub fn part_1(input: &HashMap<&str, MonkeyYell>) -> u64 {
+    get_monkey_number("root", input)
+}
+
+pub fn part_2(input: &HashMap<&str, MonkeyYell>) -> u64 {
+    test_equality("root", input)
 }

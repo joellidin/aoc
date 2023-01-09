@@ -60,13 +60,10 @@ fn to_snafu(base_10: isize) -> String {
     }
 }
 
-pub fn solution() {
-    println!(
-        "We supply {} to Bob's console.",
-        include_str!("../data/day25.txt")
-            .lines()
-            .map(|l| l.parse::<Snafu>().unwrap())
-            .sum::<Snafu>()
-            .base_snafu
-    )
+pub fn solution(input: &str) -> String {
+    input
+        .lines()
+        .map(|l| l.parse::<Snafu>().unwrap())
+        .sum::<Snafu>()
+        .base_snafu
 }

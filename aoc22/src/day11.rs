@@ -108,11 +108,16 @@ impl FromStr for Monkey {
         })
     }
 }
-pub fn solution() {
-    let mut monkeys = include_str!("../data/day11.txt")
+
+fn get_monkeys(input: &str) -> Vec<Monkey> {
+    input
         .split("\n\n")
         .map(|monkey| monkey.parse::<Monkey>().unwrap())
-        .collect::<Vec<_>>();
+        .collect()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let mut monkeys = get_monkeys(input);
     let mut processed_items = vec![0; monkeys.len()];
     for _ in 0..20 {
         for i in 0..monkeys.len() {
@@ -126,12 +131,12 @@ pub fn solution() {
         }
     }
     processed_items.sort_by(|a, b| b.cmp(a));
+    processed_items[0] * processed_items[1]
+}
 
-    let mut monkeys = include_str!("../data/day11.txt")
-        .split("\n\n")
-        .map(|monkey| monkey.parse::<Monkey>().unwrap())
-        .collect::<Vec<_>>();
-    let mut processed_items2 = vec![0; monkeys.len()];
+pub fn part_2(input: &str) -> u64 {
+    let mut monkeys = get_monkeys(input);
+    let mut processed_items = vec![0; monkeys.len()];
     let mod_val = monkeys.iter().fold(1, |acc, monkey| acc * monkey.test.0 .0);
     for _ in 0..10000 {
         for i in 0..monkeys.len() {
@@ -140,18 +145,10 @@ pub fn solution() {
                 let new_val = item % mod_val;
                 monkeys[to_monkey.0].starting_items.push(new_val);
                 monkeys[i].starting_items.pop();
-                processed_items2[i] += 1;
+                processed_items[i] += 1;
             }
         }
     }
-    processed_items2.sort_by(|a, b| b.cmp(a));
-
-    println!(
-        "Level of monkey business after 20 rounds: {}",
-        processed_items[0] * processed_items[1]
-    );
-    println!(
-        "Level of monkey business after 10000 rounds: {}",
-        processed_items2[0] as u64 * processed_items2[1] as u64
-    );
+    processed_items.sort_by(|a, b| b.cmp(a));
+    processed_items[0] as u64 * processed_items[1] as u64
 }

@@ -1,26 +1,27 @@
-pub fn solution() {
-    let input = include_str!("../data/day4.txt");
-    let lines = input.trim().split('\n');
+pub fn generator(input: &str) -> Vec<(u32, u32, u32, u32)> {
+    input
+        .trim()
+        .lines()
+        .map(|line| {
+            let (a, b) = line.split_once(',').unwrap();
+            let mut a = a.split('-').map(|num| num.parse::<u32>().unwrap());
+            let mut b = b.split('-').map(|num| num.parse::<u32>().unwrap());
+            let (a_min, a_max) = (a.next().unwrap(), a.next().unwrap());
+            let (b_min, b_max) = (b.next().unwrap(), b.next().unwrap());
+            (a_min, a_max, b_min, b_max)
+        })
+        .collect()
+}
 
-    let result = lines.fold((0, 0), |acc, line| {
-        let (a, b) = line.split_once(',').unwrap();
-        let mut a = a.split('-').map(|num| num.parse::<u32>().unwrap());
-        let mut b = b.split('-').map(|num| num.parse::<u32>().unwrap());
-        let (a_min, a_max) = (a.next().unwrap(), a.next().unwrap());
-        let (b_min, b_max) = (b.next().unwrap(), b.next().unwrap());
-        let point1 =
-            if ((a_min <= b_min) && (a_max >= b_max)) || ((b_min <= a_min) && (b_max >= a_max)) {
-                1
-            } else {
-                0
-            };
-        let point2 = if (a_max >= b_min) && (b_max >= a_min) {
-            1
-        } else {
-            0
-        };
-        (acc.0 + point1, acc.1 + point2)
-    });
-    println!("Complete overlaps: {}", result.0);
-    println!("Partial overlaps {}", result.1);
+pub fn part_1(input: &[(u32, u32, u32, u32)]) -> u32 {
+    input.iter().fold(0, |acc, (a_min, a_max, b_min, b_max)| {
+        acc + (((a_min <= b_min) && (a_max >= b_max)) || ((b_min <= a_min) && (b_max >= a_max)))
+            as u32
+    })
+}
+
+pub fn part_2(input: &[(u32, u32, u32, u32)]) -> u32 {
+    input.iter().fold(0, |acc, (a_min, a_max, b_min, b_max)| {
+        acc + ((a_max >= b_min) && (b_max >= a_min)) as u32
+    })
 }

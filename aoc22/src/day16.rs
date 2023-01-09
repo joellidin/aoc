@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::str::FromStr;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-struct Valve {
-    flow_rate: usize,
+pub struct Valve {
+    flow_rate: u32,
     leading_valves: Vec<String>,
 }
 
@@ -30,7 +30,7 @@ impl FromStr for Valve {
     }
 }
 
-fn bfs(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> usize {
+fn bfs(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> u32 {
     let mut q = VecDeque::new();
     let flow = 0;
     let open_valves: HashSet<Valve> = HashSet::new();
@@ -73,7 +73,7 @@ fn bfs(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> u
     max_flow
 }
 
-fn bfs2(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> usize {
+fn bfs2(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> u32 {
     let mut q = VecDeque::new();
     let flow = 0;
     let open_valves: HashSet<Valve> = HashSet::new();
@@ -191,9 +191,8 @@ fn bfs2(valves: &HashMap<String, Valve>, start_valve: Valve, time_left: i16) -> 
     max_flow
 }
 
-pub fn solution() {
+pub fn generator(input: &str) -> HashMap<String, Valve> {
     let mut valves = HashMap::new();
-    let input = include_str!("../data/day16.txt");
     input
         .trim_end()
         .split('\n')
@@ -206,17 +205,13 @@ pub fn solution() {
             valves.insert(valve_name.to_owned(), line.parse::<Valve>().unwrap());
         })
         .for_each(drop);
+    valves
+}
 
-    let res = bfs(
-        &valves,
-        valves.get(&"AA".to_owned()).unwrap().to_owned(),
-        30,
-    );
-    println!("We could release a maximum of {res} pressure");
-    let res2 = bfs2(
-        &valves,
-        valves.get(&"AA".to_owned()).unwrap().to_owned(),
-        26,
-    );
-    println!("We and the elephant can together release a maximum of {res2} pressure");
+pub fn part_1(input: &HashMap<String, Valve>) -> u32 {
+    bfs(input, input.get(&"AA".to_owned()).unwrap().to_owned(), 30)
+}
+
+pub fn part_2(input: &HashMap<String, Valve>) -> u32 {
+    bfs2(input, input.get(&"AA".to_owned()).unwrap().to_owned(), 26)
 }

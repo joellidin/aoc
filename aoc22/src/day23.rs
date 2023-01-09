@@ -4,9 +4,9 @@ use std::{
 };
 
 #[derive(Hash, Clone, Copy, Debug, PartialEq, Eq)]
-struct Pos {
-    x: isize,
-    y: isize,
+pub struct Pos {
+    x: i32,
+    y: i32,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -17,8 +17,8 @@ enum Dir {
     East,
 }
 
-impl From<usize> for Dir {
-    fn from(n: usize) -> Self {
+impl From<u8> for Dir {
+    fn from(n: u8) -> Self {
         match n {
             0 => Dir::North,
             1 => Dir::South,
@@ -102,7 +102,7 @@ fn generate_proposals(positions: &HashSet<Pos>, proposals: &mut HashMap<Pos, Pos
         .iter()
         .filter(|pos| pos.has_neighbours(positions))
         .for_each(|pos| {
-            let dirs = successors(Some(direction as usize), |&dir| Some((dir + 1) % 4));
+            let dirs = successors(Some(direction as u8), |&dir| Some((dir + 1) % 4));
             for dir in dirs.take(4).map(Dir::from) {
                 if !pos.is_blocked(positions, &dir) {
                     if proposals.insert(pos.step(&dir), *pos).is_some() {
@@ -130,15 +130,15 @@ fn update_positions(positions: &mut HashSet<Pos>, proposals: &mut HashMap<Pos, P
     changed
 }
 
-fn simulate(max_iterations: Option<usize>, positions: &mut HashSet<Pos>, mut dir: Dir) -> usize {
+fn simulate(max_iterations: Option<u32>, positions: &mut HashSet<Pos>, mut dir: Dir) -> u32 {
     let mut proposals = HashMap::new();
     let mut num = 1;
     generate_proposals(positions, &mut proposals, dir);
     while update_positions(positions, &mut proposals) {
-        if num == max_iterations.unwrap_or(usize::MAX) {
+        if num == max_iterations.unwrap_or(u32::MAX) {
             break;
         }
-        dir = Dir::from((dir as usize + 1) % 4);
+        dir = Dir::from((dir as u8 + 1) % 4);
         generate_proposals(positions, &mut proposals, dir);
         num += 1;
     }
@@ -146,10 +146,10 @@ fn simulate(max_iterations: Option<usize>, positions: &mut HashSet<Pos>, mut dir
 }
 
 fn get_bounding_box(positions: &HashSet<Pos>) -> (Pos, Pos) {
-    let mut min_x = std::isize::MAX;
-    let mut min_y = std::isize::MAX;
-    let mut max_x = std::isize::MIN;
-    let mut max_y = std::isize::MIN;
+    let mut min_x = std::i32::MAX;
+    let mut min_y = std::i32::MAX;
+    let mut max_x = std::i32::MIN;
+    let mut max_y = std::i32::MIN;
     positions.iter().for_each(|pos| {
         if pos.x < min_x {
             min_x = pos.x;
@@ -182,18 +182,18 @@ fn print_positions(positions: &HashSet<Pos>) {
     }
 }
 
-fn get_empty_positions(positions: &HashSet<Pos>) -> usize {
+fn get_empty_positions(positions: &HashSet<Pos>) -> u32 {
     let (lower_left, upper_right) = get_bounding_box(positions);
     (lower_left.x..=upper_right.x)
         .map(|x| {
             (lower_left.y..=upper_right.y)
                 .filter(|y| !positions.contains(&Pos { x, y: *y }))
-                .count()
+                .count() as u32
         })
         .sum()
 }
 
-fn get_elves_positions(input: &str) -> HashSet<Pos> {
+pub fn generator(input: &str) -> HashSet<Pos> {
     input
         .lines()
         .enumerate()
@@ -202,24 +202,20 @@ fn get_elves_positions(input: &str) -> HashSet<Pos> {
                 .enumerate()
                 .filter(|(_, c)| c == &'#')
                 .map(move |(x, _)| Pos {
-                    x: x as isize,
-                    y: y as isize,
+                    x: x as i32,
+                    y: y as i32,
                 })
         })
         .collect()
 }
 
-pub fn solution() {
-    let input = include_str!("../data/day23.txt");
-    let mut elves = get_elves_positions(input);
-    simulate(Some(10), &mut elves, Dir::North);
-    println!(
-        "Empty positions after 10 iterations: {}",
-        get_empty_positions(&elves)
-    );
-    let mut elves = get_elves_positions(input);
-    println!(
-        "Number iterations before steady state: {}",
-        simulate(None, &mut elves, Dir::North)
-    );
+pub fn part_1(input: &HashSet<Pos>) -> u32 {
+    let mut positions = input.clone();
+    simulate(Some(10), &mut positions, Dir::North);
+    get_empty_positions(&positions)
+}
+
+pub fn part_2(input: &HashSet<Pos>) -> u32 {
+    let mut positions = input.clone();
+    simulate(None, &mut positions, Dir::North)
 }

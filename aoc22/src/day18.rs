@@ -1,7 +1,7 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug, PartialOrd, Ord)]
-struct Point {
+pub struct Point {
     x: isize,
     y: isize,
     z: isize,
@@ -131,9 +131,9 @@ impl BoundingBox {
     }
 }
 
-fn parse_points() -> HashSet<Point> {
+pub fn generator(input: &str) -> HashSet<Point> {
     let mut points = HashSet::new();
-    include_str!("../data/day18.txt")
+    input
         .trim()
         .split('\n')
         .map(|line| {
@@ -151,14 +151,13 @@ fn parse_points() -> HashSet<Point> {
     points
 }
 
-pub fn solution() {
-    let points = parse_points();
-    let exposed_sides = points
+pub fn part_1(input: &HashSet<Point>) -> u32 {
+    input
         .iter()
-        .fold(0, |acc, p| (acc + 6) - p.sides_touching(&points));
-    println!("Surface area of all points: {exposed_sides}");
-    let points = parse_points();
-    let outer = BoundingBox::new(&points).adjacent_points_outside(&points);
-    let exposed_sides2: usize = points.iter().map(|p| p.sides_touching(&outer)).sum();
-    println!("Exterior surface area: {exposed_sides2}");
+        .fold(0, |acc, p| (acc + 6) - p.sides_touching(input) as u32)
+}
+
+pub fn part_2(input: &HashSet<Point>) -> u32 {
+    let outer = BoundingBox::new(input).adjacent_points_outside(input);
+    input.iter().map(|p| p.sides_touching(&outer) as u32).sum()
 }

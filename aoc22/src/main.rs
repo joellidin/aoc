@@ -1,4 +1,5 @@
-use std::env;
+#![recursion_limit = "256"]
+
 mod day1;
 mod day2;
 mod day3;
@@ -25,42 +26,31 @@ mod day23;
 mod day24;
 mod day25;
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    let day_solution = &args[1];
-    match day_solution.as_str() {
-        "1" => day1::solution(),
-        "2" => day2::solution(),
-        "3" => day3::solution(),
-        "4" => day4::solution(),
-        "5" => day5::solution(),
-        "6" => day6::solution(),
-        "7" => day7::solution(),
-        "8" => day8::solution(),
-        "9" => day9::solution(),
-        "10" => day10::solution(),
-        "11" => day11::solution(),
-        "12" => day12::solution(),
-        "13" => day13::solution(),
-        "14" => day14::solution(),
-        "15" => day15::solution(),
-        "16" => day16::solution(),
-        "17" => day17::solution(),
-        "18" => day18::solution(),
-        "19" => day19::solution(),
-        "20" => day20::solution(),
-        "21" => day21::solution(),
-        "22" => day22::solution(),
-        "23" => day23::solution(),
-        "24" => day24::solution(),
-        "25" => day25::solution(),
-        s => {
-            let num = s.parse::<usize>().expect("Expecting a positive number");
-            if num > 25 {
-                panic!("Not a valid day for advent of code. Input a number between 1 and 25.");
-            }
-            panic!("This day is not solved yet.");
-
-        }
-    };
+aoc_main::main! {
+    year 2022;
+    day1  : generator => part_1, part_2;
+    day2              => part_1, part_2;
+    day3              => part_1, part_2;
+    day4  : generator => part_1, part_2;
+    day5  : generator => part_1, part_2;
+    day6              => part_1, part_2;
+    day7  : generator => part_1, part_2;
+    day8  : generator => part_1, part_2;
+    day9  : generator => part_1, part_2;
+    day10             => part_1, part_2;
+    day11             => part_1, part_2;
+    day12 : generator => part_1, part_2;
+    day13 : generator => part_1, part_2;
+    day14             => part_1, part_2;
+    day15 : generator => part_1, part_2;
+    day16 : generator => part_1, part_2;
+    day17             => part_1, part_2;
+    day18 : generator => part_1, part_2;
+    day19 : generator => part_1, part_2;
+    day20 : generator => part_1, part_2;
+    day21 : generator => part_1, part_2;
+    day22 : generator => part_1, part_2;
+    day23 : generator => part_1, part_2;
+    day24             => part_1, part_2;
+    day25             => solution;
 }
