@@ -1,2 +1,3 @@
 [workspace]
-members = ["aoc22", "aoc15"]
+members = ["aoc23", "aoc22", "aoc15"]
+resolver = "2"
