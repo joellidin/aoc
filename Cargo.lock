@@ -40,6 +40,9 @@ dependencies = [
 [[package]]
 name = "aoc23"
 version = "0.1.0"
+dependencies = [
+ "aoc-main",
+]
 
 [[package]]
 name = "attohttpc"
