@@ -91,6 +91,20 @@ pub fn part_1(input: &[Vec<char>]) -> u32 {
     sum
 }
 
+pub fn part_1_solution_2(input: &[Vec<char>]) -> u32 {
+    input
+        .iter()
+        .enumerate()
+        .flat_map(|(i, v)| {
+            v.iter().enumerate().filter_map(move |(j, c)| match c {
+                '0'..='9' | '.' => None,
+                _ => Some((i, j)),
+            })
+        })
+        .map(|pos| find_adjacent_numbers(input, pos).iter().sum::<u32>())
+        .sum()
+}
+
 pub fn part_2(input: &[Vec<char>]) -> u32 {
     let gear_positions: HashSet<(usize, usize)> = input
         .iter()
