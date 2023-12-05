@@ -51,24 +51,45 @@ fn find_destination(source: &u64, map: &Map) -> u64 {
     *source
 }
 
+fn find_source(destination: &u64, map: &Map) -> u64 {
+    if let Some((i, _)) = map
+        .destination_range_start
+        .iter()
+        .enumerate()
+        .find(|&(i, &x)| (x..x + map.range_length[i]).contains(destination))
+    {
+        return ((map.source_range_start[i] as i64 - map.destination_range_start[i] as i64)
+            + *destination as i64) as u64;
+    }
+    *destination
+}
+
 pub fn part_1((seeds, maps): &(Vec<u64>, Vec<Map>)) -> u64 {
     seeds
         .iter()
-        .map(|seed| process_seed(seed, maps))
+        .map(|seed| {
+            maps.iter().fold(*seed, |acc, map| find_destination(&acc, map))
+        })
         .min()
         .unwrap()
 }
 
 pub fn part_2((seeds, maps): &(Vec<u64>, Vec<Map>)) -> u64 {
-    seeds
-        .chunks_exact(2)
-        .flat_map(|chunk| chunk[0]..chunk[0] + chunk[1])
-        .map(|seed| process_seed(&seed, maps))
-        .min()
-        .unwrap()
-}
+    let mut end = 1;
+    loop {
+        let start_seed = maps
+            .iter()
+            .rev()
+            .fold(end, |acc, map| find_source(&acc, map));
 
-fn process_seed(seed: &u64, maps: &[Map]) -> u64 {
-    maps.iter()
-        .fold(*seed, |acc, map| find_destination(&acc, map))
+        if seeds.chunks_exact(2).any(|slice| {
+            if let [seed, length] = *slice {
+                return start_seed >= seed && start_seed < seed + length;
+            }
+            false
+        }) {
+            return end;
+        }
+        end += 1;
+    }
 }
