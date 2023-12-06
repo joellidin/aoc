@@ -51,45 +51,65 @@ fn find_destination(source: &u64, map: &Map) -> u64 {
     *source
 }
 
-fn find_source(destination: &u64, map: &Map) -> u64 {
-    if let Some((i, _)) = map
-        .destination_range_start
-        .iter()
-        .enumerate()
-        .find(|&(i, &x)| (x..x + map.range_length[i]).contains(destination))
-    {
-        return ((map.source_range_start[i] as i64 - map.destination_range_start[i] as i64)
-            + *destination as i64) as u64;
-    }
-    *destination
-}
-
 pub fn part_1((seeds, maps): &(Vec<u64>, Vec<Map>)) -> u64 {
     seeds
         .iter()
         .map(|seed| {
-            maps.iter().fold(*seed, |acc, map| find_destination(&acc, map))
+            maps.iter()
+                .fold(*seed, |acc, map| find_destination(&acc, map))
         })
         .min()
         .unwrap()
 }
 
 pub fn part_2((seeds, maps): &(Vec<u64>, Vec<Map>)) -> u64 {
-    let mut end = 1;
-    loop {
-        let start_seed = maps
-            .iter()
-            .rev()
-            .fold(end, |acc, map| find_source(&acc, map));
-
-        if seeds.chunks_exact(2).any(|slice| {
-            if let [seed, length] = *slice {
-                return start_seed >= seed && start_seed < seed + length;
+    let mut ranges = seeds
+        .chunks_exact(2)
+        .filter_map(|c| {
+            if let &[start, range] = c {
+                Some((start, start + range - 1))
+            } else {
+                None
             }
-            false
-        }) {
-            return end;
-        }
-        end += 1;
-    }
+        })
+        .collect::<Vec<_>>();
+
+    maps.iter().for_each(|map| {
+        let mut destination_ranges = Vec::new();
+
+        ranges.iter().cloned().for_each(|(start, end)| {
+            let mut current_ranges = vec![(start, end)];
+
+            'outer: while let Some((current_start, current_end)) = current_ranges.pop() {
+                for i in 0..map.source_range_start.len() {
+                    let source_start = map.source_range_start[i];
+                    let source_end = source_start + map.range_length[i] - 1;
+
+                    if current_start > source_end || current_end < source_start {
+                        continue;
+                    }
+
+                    let new_start = u64::max(current_start, source_start);
+                    let new_end = u64::min(current_end, source_end);
+
+                    destination_ranges.push((
+                        find_destination(&new_start, map),
+                        find_destination(&new_end, map),
+                    ));
+
+                    if new_start > current_start {
+                        current_ranges.push((current_start, new_start - 1));
+                    }
+
+                    if new_end < current_end {
+                        current_ranges.push((new_end + 1, current_end));
+                    }
+                    continue 'outer;
+                }
+                destination_ranges.push((current_start, current_end));
+            }
+        });
+        ranges = destination_ranges;
+    });
+    *ranges.iter().map(|(start, _)| start).min().unwrap()
 }
