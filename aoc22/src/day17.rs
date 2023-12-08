@@ -15,7 +15,7 @@ enum Shape {
 }
 
 impl Shape {
-    const ORDER: &[Shape] = &[
+    const ORDER: &'static [Shape] = &[
         Shape::Horizontal,
         Shape::Plus,
         Shape::InverseL,

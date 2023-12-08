@@ -4,59 +4,58 @@ pub fn generator(input: &str) -> Vec<Vec<&str>> {
     let numbers = input
         .lines()
         .map(|line| {
-            let copy_line = line.clone();
             line.chars()
                 .enumerate()
                 .filter_map(|(i, c)| match c {
                     'o' => {
-                        if copy_line.get(i..i + 3) == Some("one") {
+                        if line.get(i..i + 3) == Some("one") {
                             Some("one")
                         } else {
                             None
                         }
                     }
                     't' => {
-                        if copy_line.get(i..i + 3) == Some("two") {
+                        if line.get(i..i + 3) == Some("two") {
                             Some("two")
-                        } else if copy_line.get(i..i + 5) == Some("three") {
+                        } else if line.get(i..i + 5) == Some("three") {
                             Some("three")
                         } else {
                             None
                         }
                     }
                     'f' => {
-                        if copy_line.get(i..i + 4) == Some("four") {
+                        if line.get(i..i + 4) == Some("four") {
                             Some("four")
-                        } else if copy_line.get(i..i + 4) == Some("five") {
+                        } else if line.get(i..i + 4) == Some("five") {
                             Some("five")
                         } else {
                             None
                         }
                     }
                     's' => {
-                        if copy_line.get(i..i + 3) == Some("six") {
+                        if line.get(i..i + 3) == Some("six") {
                             Some("six")
-                        } else if copy_line.get(i..i + 5) == Some("seven") {
+                        } else if line.get(i..i + 5) == Some("seven") {
                             Some("seven")
                         } else {
                             None
                         }
                     }
                     'e' => {
-                        if copy_line.get(i..i + 5) == Some("eight") {
+                        if line.get(i..i + 5) == Some("eight") {
                             Some("eight")
                         } else {
                             None
                         }
                     }
                     'n' => {
-                        if copy_line.get(i..i + 4) == Some("nine") {
+                        if line.get(i..i + 4) == Some("nine") {
                             Some("nine")
                         } else {
                             None
                         }
                     }
-                    c if c.is_ascii_digit() => copy_line.get(i..i + 1),
+                    c if c.is_ascii_digit() => line.get(i..i + 1),
                     _ => None,
                 })
                 .collect()

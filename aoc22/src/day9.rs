@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 fn update_position(first: (i32, i32), next: (i32, i32)) -> (i32, i32) {
     let (x, y) = match (first.0 - next.0, first.1 - next.1) {
-        (-1 | 0 | 1, -1 | 0 | 1) => (0, 0),
+        (-1..=1, -1..=1) => (0, 0),
         (1 | 2, 1 | 2) => (1, 1),
         (2, 0) => (1, 0),
         (1 | 2, -1 | -2) => (1, -1),

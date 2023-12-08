@@ -9,7 +9,6 @@ pub fn generator(input: &str) -> Vec<(&str, u32)> {
         .filter(|line| *line != "$ ls" && !line.starts_with("dir"))
         .map(|line| {
             if let Some(dir) = line.strip_prefix("$ cd ") {
-                let dir = dir;
                 if dir == ".." {
                     let (name, size) = dirs.pop().unwrap();
                     dirs.last_mut().unwrap().1 += size;
@@ -24,8 +23,7 @@ pub fn generator(input: &str) -> Vec<(&str, u32)> {
         })
         .for_each(drop);
 
-    while !dirs.is_empty() {
-        let (name, size) = dirs.pop().unwrap();
+    while let Some((name, size)) = dirs.pop() {
         final_dirs.push((name, size));
         if let Some((_, _)) = dirs.last() {
             dirs.last_mut().unwrap().1 += size;

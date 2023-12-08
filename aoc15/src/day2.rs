@@ -7,7 +7,7 @@ pub fn solution() {
             .collect::<Vec<usize>>();
 
         v.sort_unstable();
-        let sides = vec![v[0] * v[1], v[1] * v[2], v[2] * v[0]];
+        let sides = [v[0] * v[1], v[1] * v[2], v[2] * v[0]];
         (
             acc_paper
                 + sides.iter().fold(0, |acc, &side| acc + 2 * side)
