@@ -55,15 +55,23 @@ fn lcm_of_vec(numbers: &[u64]) -> u64 {
     numbers.iter().cloned().reduce(lcm).unwrap_or(1)
 }
 
-pub fn part_1((instructions, map): &(Vec<Directions>, HashMap<String, (String, String)>)) -> u32 {
-    let mut instructions_cycle = instructions.iter().cycle();
-    let mut current = "AAA".to_string();
+pub fn count_steps_to_end<'a, F, I>(
+    start: String,
+    mut instructions: I,
+    map: &HashMap<String, (String, String)>,
+    is_end: F,
+) -> u32
+where
+    F: Fn(&str) -> bool,
+    I: Iterator<Item = &'a Directions>,
+{
+    let mut current = start;
     let mut steps = 0;
 
-    while current != *"ZZZ" {
-        let new_nodes = map.get(&current).unwrap();
+    while !is_end(&current) {
+        let new_nodes = map.get(&current).expect("Current node not found in map");
         steps += 1;
-        current = match instructions_cycle.next() {
+        current = match instructions.next() {
             Some(Directions::Left) => new_nodes.0.to_owned(),
             Some(Directions::Right) => new_nodes.1.to_owned(),
             None => panic!("Something wrong with the instructions cycle."),
@@ -72,30 +80,24 @@ pub fn part_1((instructions, map): &(Vec<Directions>, HashMap<String, (String, S
     steps
 }
 
-pub fn part_2((instructions, map): &(Vec<Directions>, HashMap<String, (String, String)>)) -> u64 {
-    let mut instructions_cycle = instructions.iter().cycle();
-    let mut currents = map.keys().filter(|s| s.ends_with('A')).collect::<Vec<_>>();
-    let mut steps = vec![];
-    let mut current_steps = 0;
+pub fn part_1((instructions, map): &(Vec<Directions>, HashMap<String, (String, String)>)) -> u32 {
+    count_steps_to_end(
+        "AAA".to_string(),
+        instructions.iter().cycle(),
+        map,
+        |node| node == "ZZZ",
+    )
+}
 
-    while !currents.is_empty() {
-        let next_instruction = instructions_cycle.next();
-        let mut new_currents = vec![];
-        current_steps += 1;
-        for current in currents {
-            let new_nodes = map.get(current).unwrap();
-            let new_current = match next_instruction {
-                Some(Directions::Left) => &new_nodes.0,
-                Some(Directions::Right) => &new_nodes.1,
-                None => panic!("Something wrong with the instructions cycle."),
-            };
-            if new_current.ends_with('Z') {
-                steps.push(current_steps);
-            } else {
-                new_currents.push(new_current);
-            }
-        }
-        currents = new_currents;
-    }
+pub fn part_2((instructions, map): &(Vec<Directions>, HashMap<String, (String, String)>)) -> u64 {
+    let instructions_cycle = instructions.iter().cycle();
+    let currents = map.keys().filter(|s| s.ends_with('A'));
+    let steps = currents
+        .map(|start| {
+            count_steps_to_end(start.to_string(), instructions_cycle.clone(), map, |node| {
+                node.ends_with('Z')
+            }) as u64
+        })
+        .collect::<Vec<_>>();
     lcm_of_vec(&steps)
 }
