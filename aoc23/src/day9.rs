@@ -9,15 +9,15 @@ fn predict<F>(numbers: &[i32], reduce_logic: F) -> i32
 where
     F: Fn(i32, &[i32]) -> i32,
 {
-    let mut pyramid = Vec::new();
+    let mut pyramid = Vec::with_capacity(numbers.len());
     let mut current_row = numbers.to_vec();
 
     while !current_row.iter().all(|&x| x == 0) {
         pyramid.push(current_row.clone());
-        current_row = current_row
-            .windows(2)
-            .map(|window| window[1] - window[0])
-            .collect();
+        (0..current_row.len() - 1).for_each(|i| {
+            current_row[i] = current_row[i + 1] - current_row[i];
+        });
+        current_row.pop();
     }
     pyramid.iter().rev().fold(0, |acc, v| reduce_logic(acc, v))
 }
