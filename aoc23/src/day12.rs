@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
@@ -15,7 +14,7 @@ pub struct SpringMap {
     configurations: Vec<Vec<usize>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Condition {
     Operational,
     Damaged,
@@ -75,94 +74,52 @@ impl FromStr for SpringMap {
     }
 }
 
-/// Counts all possible configurations of springs based on their condition.
-///
-/// This function recursively evaluates each spring in the given list, considering
-/// their operational, damaged, or unknown states, and calculates the total number
-/// of valid configurations that match the provided configuration sizes.
-fn count_possible_configs<'a>(
-    springs: &'a [Condition],
-    configurations: &'a [usize],
-    memoization: &mut HashMap<(&'a [usize], &'a [Condition]), usize>,
-) -> usize {
-    // Base case: If there are no springs left, check if configurations are also empty.
-    if springs.is_empty() {
-        return (configurations.is_empty()) as usize;
+fn solve(springs: &[Condition], counts: Vec<usize>) -> usize {
+    // Remove trailing operational conditions
+    let mut processed_springs = springs.to_vec();
+    // Prepend a single Operational condition
+    processed_springs.insert(0, Condition::Operational);
+
+    let mut dp = vec![0; processed_springs.len() + 1];
+    dp[0] = 1;
+
+    // Initial DP setup
+    for (i, &condition) in processed_springs.iter().enumerate() {
+        if condition == Condition::Damaged {
+            break;
+        }
+        dp[i + 1] = 1;
     }
 
-    // Handling different conditions of the first spring in the list.
-    match springs[0] {
-        // If the first spring is operational, skip it and continue with the rest.
-        Condition::Operational => {
-            count_possible_configs(&springs[1..], configurations, memoization)
-        }
-        // If the first spring is damaged or its condition is unknown,
-        // we need to consider scenarios where it's part of a damaged group.
-        Condition::Damaged | Condition::Unknown => {
-            let configs_with_damaged = count_damaged_configs(springs, configurations, memoization);
+    // Main DP calculation
+    for &count in &counts {
+        let mut next_dp = vec![0; processed_springs.len() + 1];
+        let mut non_operational_streak = 0;
 
-            if springs[0] == Condition::Unknown {
-                // For unknown conditions, consider both possibilities: as damaged and as operational.
-                let configs_skipping_unknown =
-                    count_possible_configs(&springs[1..], configurations, memoization);
-                configs_with_damaged + configs_skipping_unknown
+        for (i, &condition) in processed_springs.iter().enumerate() {
+            non_operational_streak = if condition != Condition::Operational {
+                non_operational_streak + 1
             } else {
-                // If the spring is confirmed as damaged, only consider configurations with it as damaged.
-                configs_with_damaged
+                0
+            };
+
+            if condition != Condition::Damaged {
+                next_dp[i + 1] = next_dp[i];
+            }
+
+            if non_operational_streak >= count
+                && processed_springs
+                    .get(i - count)
+                    .map_or(false, |&c| c != Condition::Damaged)
+            {
+                next_dp[i + 1] += dp[i - count];
             }
         }
-    }
-}
 
-/// Counts configurations where groups of springs are considered to be damaged.
-///
-/// This function evaluates the possibility of forming groups of damaged springs
-/// based on the given configurations. It considers both confirmed damaged and unknown
-/// springs, excluding operational springs from forming valid damaged groups.
-fn count_damaged_configs<'a>(
-    springs: &'a [Condition],
-    configuration: &'a [usize],
-    memoization: &mut HashMap<(&'a [usize], &'a [Condition]), usize>,
-) -> usize {
-    // Check if the result is already computed to avoid redundant calculations.
-    if let Some(&result) = memoization.get(&(configuration, springs)) {
-        return result;
+        dp = next_dp;
     }
 
-    // If there are no configurations left or no springs left, no valid solutions can be formed.
-    let result = if configuration.is_empty() || springs.is_empty() {
-        0
-    } else {
-        let next_group_size = configuration[0];
-
-        // Check if there are enough springs left for the current configuration.
-        // If the number of springs is less than the required group size, no solution is possible.
-        if springs.len() < next_group_size
-            // If any of the springs in the required group size are operational, it invalidates
-            // the configuration since we are looking for groups of damaged springs.
-            || springs[..next_group_size].contains(&Condition::Operational)
-            // If the spring immediately following the current group is also damaged,
-            // it means this configuration merges two groups of damaged springs, which is not allowed.
-            || springs.get(next_group_size) == Some(&Condition::Damaged)
-        {
-            0
-        } else if next_group_size == springs.len() && configuration.len() == 1 {
-            // If the current group size equals the total number of springs left, and there's
-            // only one configuration left, it means this is a valid end configuration.
-            1
-        } else {
-            // Recurse with the remaining springs and configurations, skipping the current group of springs.
-            count_possible_configs(
-                &springs[std::cmp::min(next_group_size + 1, springs.len())..],
-                &configuration[1..],
-                memoization,
-            )
-        }
-    };
-
-    // Store the computed result in memoization to avoid recalculating for the same inputs.
-    memoization.insert((configuration, springs), result);
-    result
+    *dp.last().unwrap_or(&0)
 }
 
 pub fn generator(input: &str) -> SpringMap {
@@ -170,20 +127,20 @@ pub fn generator(input: &str) -> SpringMap {
 }
 
 pub fn part_1(spring_map: &SpringMap) -> usize {
-    let mut memoization = HashMap::new();
     spring_map
         .springs
         .iter()
-        .zip(spring_map.configurations.iter())
-        .map(|(spring, configuration)| {
-            count_possible_configs(spring, configuration, &mut memoization)
-        })
+        .enumerate()
+        .map(|(i, spring)| solve(spring, spring_map.configurations[i].clone()))
         .sum()
 }
 
 pub fn part_2(spring_map: &SpringMap) -> usize {
-    let mut memoization = HashMap::new();
-
+    let new_configurations = spring_map
+        .configurations
+        .iter()
+        .map(|config| config.repeat(5))
+        .collect::<Vec<_>>();
     let new_springs = spring_map
         .springs
         .iter()
@@ -195,18 +152,9 @@ pub fn part_2(spring_map: &SpringMap) -> usize {
             extended
         })
         .collect::<Vec<_>>();
-
-    let new_configurations = spring_map
-        .configurations
-        .iter()
-        .map(|config| config.repeat(5))
-        .collect::<Vec<_>>();
-
     new_springs
         .iter()
         .zip(new_configurations.iter())
-        .map(|(spring, configuration)| {
-            count_possible_configs(spring, configuration, &mut memoization)
-        })
+        .map(|(spring, configs)| solve(spring, configs.to_vec()))
         .sum()
 }
