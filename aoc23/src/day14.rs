@@ -1,55 +1,39 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fmt::{Debug, Formatter, Result},
-    hash::{Hash, Hasher},
 };
 
-#[derive(Clone, Hash, PartialEq, Eq)]
-pub struct Map {
-    map: Vec<Vec<Tile>>,
+const MAX_ROWS: usize = 102;
+
+#[derive(Clone, Copy)]
+pub struct Grid {
+    round_rocks: [u128; MAX_ROWS],
+    square_rocks: [u128; MAX_ROWS],
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub enum Tile {
-    RoundedRock,
-    SquaredRock,
-    Empty,
+enum TiltDirection {
+    West,
+    East,
 }
 
-pub fn generator(input: &str) -> Map {
-    use Tile::*;
-    Map {
-        map: input
-            .lines()
-            .map(|l| {
-                l.chars()
-                    .map(|c| match c {
-                        'O' => RoundedRock,
-                        '#' => SquaredRock,
-                        '.' => Empty,
-                        _ => panic!("Invalid character"),
-                    })
-                    .collect()
-            })
-            .collect(),
-    }
-}
-
-impl Debug for Tile {
+impl Debug for Grid {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        match self {
-            Tile::RoundedRock => Ok(write!(f, "O")?),
-            Tile::SquaredRock => Ok(write!(f, "#")?),
-            Tile::Empty => Ok(write!(f, ".")?),
-        }
-    }
-}
-impl Debug for Map {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        writeln!(f, "Map:")?;
-        for row in self.map.iter() {
-            for tile in row.iter() {
-                write!(f, "{tile:?}")?;
+        let start_row = self
+            .square_rocks
+            .iter()
+            .position(|n| n == &u128::MAX)
+            .unwrap();
+        writeln!(f)?;
+        for i in start_row + 1..MAX_ROWS - 1 {
+            for j in 1..(MAX_ROWS - start_row - 1) {
+                let mask = 1 << j;
+                if self.square_rocks[i] & mask != 0 {
+                    write!(f, "#")?;
+                } else if self.round_rocks[i] & mask != 0 {
+                    write!(f, "O")?;
+                } else {
+                    write!(f, ".")?;
+                }
             }
             writeln!(f)?;
         }
@@ -57,286 +41,207 @@ impl Debug for Map {
     }
 }
 
-impl Map {
-    fn tilt_north(&mut self) {
-        use Tile::*;
-        let n_rows = self.map.len();
-        let mut movements = Vec::new();
-        let mut moved_rocks = HashSet::new();
-        self.map.iter().enumerate().for_each(|(i, row)| {
-            row.iter().enumerate().for_each(|(j, tile)| match tile {
-                RoundedRock => {
-                    if moved_rocks.get(&(i, j)).is_some() {
-                        for k in i + 1..n_rows {
-                            match self.map[k][j] {
-                                RoundedRock => {
-                                    if moved_rocks.get(&(k, j)).is_none() {
-                                        movements.push((k, i, j));
-                                        moved_rocks.insert((k, j));
-                                        break;
-                                    }
-                                }
-                                SquaredRock => break,
-                                Empty => continue,
-                            }
-                        }
-                    }
-                }
-                SquaredRock => {}
-                Empty => {
-                    for k in i + 1..n_rows {
-                        match self.map[k][j] {
-                            RoundedRock => {
-                                if moved_rocks.get(&(k, j)).is_none() {
-                                    movements.push((k, i, j));
-                                    moved_rocks.insert((k, j));
-                                    break;
-                                }
-                            }
-                            SquaredRock => break,
-                            Empty => continue,
-                        }
-                    }
-                }
-            });
-        });
+impl Grid {
+    fn new(input: &str) -> Self {
+        let mut round_rocks = [0; MAX_ROWS];
+        let mut square_rocks = [0; MAX_ROWS];
 
-        // Apply movements
-        for (from_i, to_i, j) in movements {
-            self.map[to_i][j] = RoundedRock;
-            self.map[from_i][j] = Empty;
+        // Determine the length of the rows (plus walls on both sides)
+        let row_length = input.lines().next().map_or(0, |s| s.len()) + 2;
+
+        // Calculate the number of input rows
+        let num_input_rows = input.lines().count();
+        let top_wall_index = MAX_ROWS - num_input_rows - 2; // Account for the top wall
+
+        // Add the top wall
+        square_rocks[top_wall_index] = u128::MAX;
+
+        for (i, line) in input.lines().enumerate() {
+            let mut round_row = 0_u128;
+            let mut square_row = 1 | (1 << (row_length - 1)); // Add walls on both sides
+            let row_index = top_wall_index + 1 + i;
+
+            for (j, ch) in line.chars().enumerate() {
+                let pos = j + 1; // Offset by 1 due to the left wall
+                if ch == 'O' {
+                    round_row |= 1 << pos;
+                } else if ch == '#' {
+                    square_row |= 1 << pos;
+                }
+            }
+
+            round_rocks[row_index] = round_row;
+            square_rocks[row_index] = square_row;
         }
-    }
 
-    fn tilt_south(&mut self) {
-        use Tile::*;
-        let mut movements = Vec::new();
-        let mut moved_rocks = HashSet::new();
-        self.map.iter().enumerate().rev().for_each(|(i, row)| {
-            row.iter().enumerate().for_each(|(j, tile)| match tile {
-                RoundedRock => {
-                    if moved_rocks.get(&(i, j)).is_some() {
-                        for k in (0..i + 1).rev() {
-                            match self.map[k][j] {
-                                RoundedRock => {
-                                    if moved_rocks.get(&(k, j)).is_none() {
-                                        movements.push((k, i, j));
-                                        moved_rocks.insert((k, j));
-                                        break;
-                                    }
-                                }
-                                SquaredRock => break,
-                                Empty => continue,
-                            }
-                        }
-                    }
-                }
-                SquaredRock => {}
-                Empty => {
-                    for k in (0..i + 1).rev() {
-                        match self.map[k][j] {
-                            RoundedRock => {
-                                if moved_rocks.get(&(k, j)).is_none() {
-                                    movements.push((k, i, j));
-                                    moved_rocks.insert((k, j));
-                                    break;
-                                }
-                            }
-                            SquaredRock => break,
-                            Empty => continue,
-                        }
-                    }
-                }
-            });
-        });
+        // Add the bottom wall
+        square_rocks[MAX_ROWS - 1] = u128::MAX;
 
-        // Apply movements
-        for (from_i, to_i, j) in movements {
-            self.map[to_i][j] = RoundedRock;
-            self.map[from_i][j] = Empty;
+        Grid {
+            round_rocks,
+            square_rocks,
         }
     }
 
     fn tilt_west(&mut self) {
-        use Tile::*;
-        let n_rows = self.map.len();
-        let n_cols = self.map[0].len();
-        let mut movements = Vec::new();
-        let mut moved_rocks = HashSet::new();
-
-        // Iterate over each row
-        for i in 0..n_rows {
-            // Iterate over columns from right to left
-            for j in 0..n_cols {
-                match self.map[i][j] {
-                    RoundedRock => {
-                        // Check if the RoundedRock at the current position has already moved
-                        if moved_rocks.get(&(i, j)).is_some() {
-                            for k in j + 1..n_cols {
-                                match self.map[i][k] {
-                                    RoundedRock => {
-                                        // Check if the RoundedRock at position k hasn't moved
-                                        if moved_rocks.get(&(i, k)).is_none() {
-                                            movements.push((i, k, j));
-                                            moved_rocks.insert((i, k));
-                                            break;
-                                        }
-                                    }
-                                    SquaredRock => break,
-                                    Empty => continue,
-                                }
-                            }
-                        }
-                    }
-                    SquaredRock => {}
-                    Empty => {
-                        // Check for a RoundedRock to the left
-                        for k in j + 1..n_cols {
-                            match self.map[i][k] {
-                                RoundedRock => {
-                                    // Move RoundedRock if it hasn't moved
-                                    if moved_rocks.get(&(i, k)).is_none() {
-                                        movements.push((i, k, j));
-                                        moved_rocks.insert((i, k));
-                                        break;
-                                    }
-                                }
-                                SquaredRock => break,
-                                Empty => continue,
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Apply movements
-        for (i, from_j, to_j) in movements {
-            self.map[i][to_j] = RoundedRock;
-            self.map[i][from_j] = Empty;
+        for i in 0..MAX_ROWS {
+            self.round_rocks[i] = self.tilt_row(
+                self.round_rocks[i],
+                self.square_rocks[i],
+                TiltDirection::West,
+            );
         }
     }
 
     fn tilt_east(&mut self) {
-        use Tile::*;
-        let n_rows = self.map.len();
-        let n_cols = self.map[0].len();
-        let mut movements = Vec::new();
-        let mut moved_rocks = HashSet::new();
+        for i in 0..MAX_ROWS {
+            self.round_rocks[i] = self.tilt_row(
+                self.round_rocks[i],
+                self.square_rocks[i],
+                TiltDirection::East,
+            );
+        }
+    }
 
-        // Iterate over each row
-        for i in 0..n_rows {
-            // Iterate over columns from right to left
-            for j in (0..n_cols).rev() {
-                match self.map[i][j] {
-                    RoundedRock => {
-                        // Check if the RoundedRock at the current position has already moved
-                        if moved_rocks.get(&(i, j)).is_some() {
-                            for k in (0..j).rev() {
-                                match self.map[i][k] {
-                                    RoundedRock => {
-                                        // Check if the RoundedRock at position k hasn't moved
-                                        if moved_rocks.get(&(i, k)).is_none() {
-                                            movements.push((i, k, j));
-                                            moved_rocks.insert((i, k));
-                                            break;
-                                        }
-                                    }
-                                    SquaredRock => break,
-                                    Empty => continue,
-                                }
-                            }
-                        }
-                    }
-                    SquaredRock => {}
-                    Empty => {
-                        // Check for a RoundedRock to the left
-                        for k in (0..j).rev() {
-                            match self.map[i][k] {
-                                RoundedRock => {
-                                    // Move RoundedRock if it hasn't moved
-                                    if moved_rocks.get(&(i, k)).is_none() {
-                                        movements.push((i, k, j));
-                                        moved_rocks.insert((i, k));
-                                        break;
-                                    }
-                                }
-                                SquaredRock => break,
-                                Empty => continue,
-                            }
-                        }
+    fn tilt_row(
+        self,
+        mut round_rocks: u128,
+        square_rocks: u128,
+        tilt_direction: TiltDirection,
+    ) -> u128 {
+        use TiltDirection::*;
+        let mut any_moved;
+
+        loop {
+            any_moved = false;
+
+            // Mask to identify positions that are free (no round or square rocks).
+            let free_positions = match tilt_direction {
+                West => !(round_rocks | square_rocks) << 1,
+                East => !(round_rocks | square_rocks) >> 1,
+            };
+            // Identify movable rocks: round rocks that have a free position
+            // left for the west direction and right for the east.
+            let movable_rocks = round_rocks & free_positions;
+
+            if movable_rocks != 0 {
+                // Move the identified rocks based on tilt direction
+                round_rocks ^= match tilt_direction {
+                    West => movable_rocks | (movable_rocks >> 1),
+                    East => movable_rocks | (movable_rocks << 1),
+                };
+                any_moved = true;
+            }
+
+            if !any_moved {
+                break;
+            }
+        }
+        round_rocks
+    }
+
+    fn tilt_north(&mut self) {
+        for col in 1..MAX_ROWS - 1 {
+            let col_mask = 1 << col;
+            let mut can_move = true;
+
+            while can_move {
+                can_move = false;
+
+                // Start from the second row (1) up to the second-to-last row (MAX_ROWS - 1)
+                for row in 1..MAX_ROWS - 1 {
+                    if (self.round_rocks[row] & col_mask) != 0  // Check if there's a round rock in the current position
+                    && (self.round_rocks[row - 1] & col_mask) == 0  // Check if the position above is empty
+                    && (self.square_rocks[row - 1] & col_mask) == 0
+                    // Check if there's no square rock in the position above
+                    {
+                        // Move the rock up
+                        self.round_rocks[row] &= !col_mask; // Remove the rock from the current position
+                        self.round_rocks[row - 1] |= col_mask; // Place the rock in the position above
+                        can_move = true;
                     }
                 }
             }
         }
+    }
 
-        // Apply movements
-        for (i, from_j, to_j) in movements {
-            self.map[i][to_j] = RoundedRock;
-            self.map[i][from_j] = Empty;
+    fn tilt_south(&mut self) {
+        for col in 1..MAX_ROWS {
+            let col_mask = 1 << col;
+            let mut can_move = true;
+
+            while can_move {
+                can_move = false;
+
+                // Start from the second-to-last row and go down to the second row
+                for row in (1..MAX_ROWS - 2).rev() {
+                    if (self.round_rocks[row] & col_mask) != 0  // Check if there's a round rock in the current position
+                    && (self.round_rocks[row + 1] & col_mask) == 0  // Check if the position below is empty
+                    && (self.square_rocks[row + 1] & col_mask) == 0
+                    // Check if there's no square rock in the position below
+                    {
+                        // Move the rock down
+                        self.round_rocks[row] &= !col_mask; // Remove the rock from the current position
+                        self.round_rocks[row + 1] |= col_mask; // Place the rock in the position below
+                        can_move = true;
+                    }
+                }
+            }
         }
     }
 
     fn cycle(&mut self, n: usize) {
-        if n == 0 {
-            return;
-        }
-
         let mut i = 0;
-        let cycle_length = {
-            let mut seen_maps = HashMap::new();
-            loop {
-                self.tilt_north();
-                self.tilt_west();
-                self.tilt_south();
-                self.tilt_east();
-                i += 1;
+        let mut seen_maps = HashMap::new();
 
-                // Compute hash of self.map
-                let mut hasher = std::collections::hash_map::DefaultHasher::new();
-                self.map.hash(&mut hasher);
-                let map_hash = hasher.finish();
+        while i < n {
+            self.tilt_north();
+            self.tilt_west();
+            self.tilt_south();
+            self.tilt_east();
+            i += 1;
 
-                if let Some(seen_index) = seen_maps.get(&map_hash) {
-                    break i - seen_index;
-                } else {
-                    seen_maps.insert(map_hash, i);
+            if let Some(seen_index) = seen_maps.get(&self.round_rocks) {
+                let cycle_length = i - seen_index;
+                if cycle_length == 0 {
+                    break;
                 }
+                // Skip the remaining cycles
+                i += ((n - i) / cycle_length) * cycle_length;
+                continue;
+            } else {
+                seen_maps.insert(self.round_rocks, i);
+            }
+        }
+    }
 
-                if i >= n {
-                    return;
+    fn count_points(&self) -> usize {
+        let mut score = 0;
+        for (i, &row) in self.round_rocks.iter().enumerate().skip(1) {
+            for j in 1..MAX_ROWS {
+                if row & (1 << j) != 0 {
+                    // Calculate the row number, with the bottom row being row 1
+                    let row_number = MAX_ROWS - i - 1;
+                    score += row_number;
                 }
             }
-        };
-
-        // Skip unnecessary iterations if n is much larger than the cycle length
-        let remaining_steps = (n - i) % cycle_length;
-        self.cycle(remaining_steps);
-    }
-    fn count_points(&self) -> usize {
-        use Tile::*;
-        self.map
-            .iter()
-            .rev()
-            .enumerate()
-            .map(|(i, row)| {
-                row.iter()
-                    .filter(|tile| matches!(tile, RoundedRock))
-                    .count()
-                    * (i + 1)
-            })
-            .sum()
+        }
+        score
     }
 }
 
-pub fn part_1(input: &Map) -> usize {
-    let mut map = input.clone();
-    map.tilt_north();
-    map.count_points()
+pub fn generator(input: &str) -> Grid {
+    Grid::new(input)
 }
 
-pub fn part_2(input: &Map) -> usize {
-    let mut map = input.clone();
-    map.cycle(1_000_000_000);
-    map.count_points()
+pub fn part_1(input: &Grid) -> usize {
+    let mut grid = *input;
+    grid.tilt_north();
+    grid.count_points()
+}
+
+pub fn part_2(input: &Grid) -> usize {
+    let mut grid = *input;
+    grid.cycle(1_000_000_000);
+    grid.count_points()
 }
