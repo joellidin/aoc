@@ -26,6 +26,12 @@ enum Direction {
     East,
 }
 
+macro_rules! get_idx {
+    ($map:expr, $i:expr, $j:expr $(, $dir:expr)?) => {
+        $i * $map.map[0].len() + $j $(+ $dir as usize * $map.map.len() * $map.map[0].len())?
+    };
+}
+
 impl TryFrom<usize> for Direction {
     type Error = ();
 
@@ -51,8 +57,7 @@ impl Debug for Grid {
             for j in 0..n_cols {
                 let mut dirs: Vec<Direction> = Vec::new();
                 for dir in 0..4 {
-                    let index = (i * n_cols + j) + dir * n_rows * n_cols;
-                    if self.beams[index] {
+                    if self.beams[get_idx!(self, i, j, dir)] {
                         // Assuming Direction can be constructed from dir (which is 0..4)
                         dirs.push(dir.try_into().unwrap());
                     }
@@ -123,18 +128,16 @@ impl Grid {
         let mut energized_tiles = vec![false; n_rows * n_cols];
         let mut beams = self.walk(start_beam);
         while let Some((row, col, direction)) = beams.pop() {
-            let seen_state_idx = (row * n_cols + col) + direction as usize * n_rows * n_cols;
-            let seen_state = seen_states[seen_state_idx];
+            let seen_state = seen_states[get_idx!(self, row, col, direction)];
             if !seen_state {
-                seen_states[seen_state_idx] = true;
+                seen_states[get_idx!(self, row, col, direction)] = true;
             } else {
                 continue;
             }
 
-            let energized_idx = row * n_cols + col;
-            let is_energized = energized_tiles[energized_idx];
+            let is_energized = energized_tiles[get_idx!(self, row, col)];
             if !is_energized {
-                energized_tiles[energized_idx] = true;
+                energized_tiles[get_idx!(self, row, col)] = true;
             }
 
             beams.extend(self.walk((row as isize, col as isize, direction)));
