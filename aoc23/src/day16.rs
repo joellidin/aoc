@@ -1,12 +1,12 @@
 use std::{
-    collections::{HashMap, HashSet},
-    fmt::{Debug, Display, Formatter, Result},
+    collections::HashMap,
+    fmt::{self, Debug, Display},
 };
 
 #[derive(Clone)]
 pub struct Grid {
     map: Vec<Vec<Tile>>,
-    beams: HashSet<(isize, isize, Direction)>,
+    beams: Vec<bool>,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -18,7 +18,7 @@ enum Tile {
     Empty,
 }
 
-#[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Direction {
     North,
     West,
@@ -26,44 +26,74 @@ enum Direction {
     East,
 }
 
-impl Debug for Grid {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let mut directions_map = HashMap::new();
+impl TryFrom<usize> for Direction {
+    type Error = ();
 
-        // Convert HashSet to HashMap
-        for &(i, j, dir) in &self.beams {
-            directions_map
-                .entry((i, j))
-                .or_insert_with(Vec::new)
-                .push(dir);
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Direction::North),
+            1 => Ok(Direction::West),
+            2 => Ok(Direction::South),
+            3 => Ok(Direction::East),
+            _ => Err(()), // Return an error for invalid values
+        }
+    }
+}
+
+impl Debug for Grid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut directions_map = HashMap::new();
+        let n_rows = self.map.len();
+        let n_cols = self.map[0].len();
+
+        // Convert seen_states to HashMap
+        for i in 0..n_rows {
+            for j in 0..n_cols {
+                let mut dirs: Vec<Direction> = Vec::new();
+                for dir in 0..4 {
+                    let index = (i * n_cols + j) + dir * n_rows * n_cols;
+                    if self.beams[index] {
+                        // Assuming Direction can be constructed from dir (which is 0..4)
+                        dirs.push(dir.try_into().unwrap());
+                    }
+                }
+                if !dirs.is_empty() {
+                    directions_map.insert((i as isize, j as isize), dirs);
+                }
+            }
         }
 
         // Printing logic
+        writeln!(f)?;
         for (i, row) in self.map.iter().enumerate() {
             for (j, tile) in row.iter().enumerate() {
-                match directions_map.get(&(i.try_into().unwrap(), j.try_into().unwrap())) {
-                    Some(dirs) if *tile == Tile::Empty => {
-                        // Print directions only if the tile is empty
-                        if dirs.len() == 1 {
-                            write!(f, "{}", dirs[0])?;
+                match tile {
+                    Tile::VerticalSplitter => write!(f, "|"),
+                    Tile::HorizontalSplitter => write!(f, "-"),
+                    Tile::SWMirror => write!(f, "/"),
+                    Tile::NWMirror => write!(f, "\\"),
+                    Tile::Empty => {
+                        if let Some(dirs) = directions_map.get(&(i as isize, j as isize)) {
+                            if dirs.len() == 1 {
+                                write!(f, "{}", dirs[0])
+                            } else {
+                                write!(f, "{}", dirs.len())
+                            }
                         } else {
-                            write!(f, "{}", dirs.len())?;
+                            write!(f, ".")
                         }
                     }
-                    _ => {
-                        // Print tile representation in all other cases
-                        write!(f, "{}", tile)?;
-                    }
-                }
+                }?;
             }
-            writeln!(f)?; // New line at the end of each row
+            writeln!(f)?;
         }
+
         Ok(())
     }
 }
 
 impl Display for Tile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Tile::VerticalSplitter => write!(f, "|"),
             Tile::HorizontalSplitter => write!(f, "-"),
@@ -75,7 +105,7 @@ impl Display for Tile {
 }
 
 impl Display for Direction {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Direction::North => write!(f, "^"),
             Direction::South => write!(f, "v"),
@@ -86,28 +116,43 @@ impl Display for Direction {
 }
 
 impl Grid {
-    fn populate_energized_tiles(&mut self, start_beam: (isize, isize, Direction)) -> &mut Self {
-        self.beams.drain();
+    fn populate_energized_tiles(&mut self, start_beam: (isize, isize, Direction)) -> usize {
+        let n_rows = self.map.len();
+        let n_cols = self.map[0].len();
+        let mut seen_states = vec![false; n_rows * n_cols * 4];
+        let mut energized_tiles = vec![false; n_rows * n_cols];
         let mut beams = self.walk(start_beam);
-        while let Some((i, j, direction)) = beams.pop() {
-            let new_tile = self.beams.insert((i, j, direction));
-            if !new_tile {
+        while let Some((row, col, direction)) = beams.pop() {
+            let seen_state_idx = (row * n_cols + col) + direction as usize * n_rows * n_cols;
+            let seen_state = seen_states[seen_state_idx];
+            if !seen_state {
+                seen_states[seen_state_idx] = true;
+            } else {
                 continue;
             }
-            beams.extend(self.walk((i, j, direction)));
+
+            let energized_idx = row * n_cols + col;
+            let is_energized = energized_tiles[energized_idx];
+            if !is_energized {
+                energized_tiles[energized_idx] = true;
+            }
+
+            beams.extend(self.walk((row as isize, col as isize, direction)));
         }
-        self
+        self.beams = seen_states;
+        energized_tiles.iter().filter(|s| **s).count()
     }
 
-    fn walk(&self, (i, j, dir): (isize, isize, Direction)) -> Vec<(isize, isize, Direction)> {
+    fn walk(&self, (row, col, dir): (isize, isize, Direction)) -> Vec<(usize, usize, Direction)> {
         use Direction::*;
         let (new_i, new_j) = match dir {
-            North => ((i - 1).max(0), j),
-            West => (i, (j - 1).max(0)),
-            South => ((i + 1).min(self.map.len() as isize - 1), j),
-            East => (i, (j + 1).min(self.map[0].len() as isize - 1)),
+            North => ((row - 1).max(0), col),
+            West => (row, (col - 1).max(0)),
+            South => ((row + 1).min(self.map.len() as isize - 1), col),
+            East => (row, (col + 1).min(self.map[0].len() as isize - 1)),
         };
-        match self.map[new_i as usize][new_j as usize] {
+        let (new_i, new_j) = (new_i as usize, new_j as usize);
+        match self.map[new_i][new_j] {
             Tile::VerticalSplitter => {
                 if dir == South || dir == North {
                     vec![(new_i, new_j, dir)]
@@ -137,41 +182,36 @@ impl Grid {
             Tile::Empty => vec![(new_i, new_j, dir)],
         }
     }
-
-    fn count_energized_tiles(&self) -> usize {
-        let mut seen = HashSet::with_capacity(self.beams.len());
-        self.beams
-            .iter()
-            .filter(|&&(i, j, _)| seen.insert((i, j)))
-            .count()
-    }
 }
 
 pub fn generator(input: &str) -> Grid {
+    let mut n_tiles = 0;
     Grid {
         map: input
             .lines()
             .map(|l| {
                 l.chars()
-                    .map(|c| match c {
-                        '|' => Tile::VerticalSplitter,
-                        '-' => Tile::HorizontalSplitter,
-                        '/' => Tile::SWMirror,
-                        '\\' => Tile::NWMirror,
-                        '.' => Tile::Empty,
-                        _ => panic!("Invalid character found."),
+                    .map(|c| {
+                        n_tiles += 1;
+                        match c {
+                            '|' => Tile::VerticalSplitter,
+                            '-' => Tile::HorizontalSplitter,
+                            '/' => Tile::SWMirror,
+                            '\\' => Tile::NWMirror,
+                            '.' => Tile::Empty,
+                            _ => panic!("Invalid character found."),
+                        }
                     })
                     .collect()
             })
             .collect(),
-        beams: HashSet::new(),
+        beams: vec![false; n_tiles * 4],
     }
 }
 
 pub fn part_1(input: &Grid) -> usize {
     let mut grid = input.clone();
     grid.populate_energized_tiles((0, -1, Direction::East))
-        .count_energized_tiles()
 }
 
 pub fn part_2(input: &Grid) -> usize {
@@ -179,38 +219,30 @@ pub fn part_2(input: &Grid) -> usize {
     let mut all_energized_tiles = Vec::new();
     // Left wall
     for i in 0..grid.map.len() {
-        all_energized_tiles.push(
-            grid.populate_energized_tiles((i as isize, -1, Direction::East))
-                .count_energized_tiles(),
-        )
+        all_energized_tiles.push(grid.populate_energized_tiles((i as isize, -1, Direction::East)))
     }
 
     // Right wall
     for i in 0..grid.map.len() {
-        all_energized_tiles.push(
-            grid.populate_energized_tiles((
-                i as isize,
-                grid.map[i].len() as isize,
-                Direction::West,
-            ))
-            .count_energized_tiles(),
-        )
+        all_energized_tiles.push(grid.populate_energized_tiles((
+            i as isize,
+            grid.map[i].len() as isize,
+            Direction::West,
+        )))
     }
 
     // Top wall
     for j in 0..grid.map[0].len() {
-        all_energized_tiles.push(
-            grid.populate_energized_tiles((-1, j as isize, Direction::South))
-                .count_energized_tiles(),
-        )
+        all_energized_tiles.push(grid.populate_energized_tiles((-1, j as isize, Direction::South)))
     }
 
     // Bottom wall
     for j in 0..grid.map[0].len() {
-        all_energized_tiles.push(
-            grid.populate_energized_tiles((grid.map.len() as isize, j as isize, Direction::North))
-                .count_energized_tiles(),
-        )
+        all_energized_tiles.push(grid.populate_energized_tiles((
+            grid.map.len() as isize,
+            j as isize,
+            Direction::North,
+        )))
     }
     *all_energized_tiles.iter().max().unwrap()
 }
