@@ -18,6 +18,7 @@ mod day8;
 mod day9;
 mod day17;
 mod day18;
+mod day19;
 
 aoc_main::main! {
     year 2023;
@@ -39,4 +40,5 @@ aoc_main::main! {
     day16 : generator => part_1, part_2;
     day17 : generator => part_1, part_2;
     day18 : generator => part_1, part_2;
+    day19 : generator => part_1, part_2;
 }
