@@ -1,5 +1,5 @@
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::BinaryHeap;
 
 #[derive(Clone)]
 pub struct Map {
@@ -8,22 +8,32 @@ pub struct Map {
 
 impl Map {
     fn find_lowest_risk_path(&self) -> Option<u32> {
+        let width = self.grid[0].len();
+        let height = self.grid.len();
         let mut heap = BinaryHeap::new();
-        let mut distances = HashMap::new();
+        let mut distances = vec![vec![u32::MAX; width]; height];
         let start = (0, 0);
-        let end = (self.grid[0].len() - 1, self.grid.len() - 1);
-        distances.insert(start, 0);
+        let end = (width - 1, height - 1);
+        distances[start.1][start.0] = 0;
         heap.push(Reverse((0, start)));
 
         while let Some(Reverse((risk_level, point))) = heap.pop() {
+            let (x, y) = point;
+
             if point == end {
                 return Some(risk_level);
             }
-            for neighbor in self.find_neighbors(point) {
-                let next_risk = risk_level + self.grid[neighbor.1][neighbor.0] as u32;
-                if next_risk < *distances.get(&neighbor).unwrap_or(&u32::MAX) {
-                    distances.insert(neighbor, next_risk);
-                    heap.push(Reverse((next_risk, neighbor)));
+
+            if risk_level > distances[y][x] {
+                continue;
+            }
+
+            for (nx, ny) in self.find_neighbors(point) {
+                let next_risk = risk_level + self.grid[ny][nx] as u32;
+
+                if next_risk < distances[ny][nx] {
+                    distances[ny][nx] = next_risk;
+                    heap.push(Reverse((next_risk, (nx, ny))));
                 }
             }
         }
