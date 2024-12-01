@@ -110,6 +110,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc24"
+version = "0.1.0"
+dependencies = [
+ "aoc-main",
+]
+
+[[package]]
 name = "attohttpc"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
