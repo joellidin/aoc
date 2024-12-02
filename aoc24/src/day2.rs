@@ -1,13 +1,32 @@
-fn is_safe(level: &[u32]) -> bool {
-    let is_increasing = level.windows(2).all(|w| w[0] < w[1]);
-    let is_decreasing = level.windows(2).all(|w| w[0] > w[1]);
+fn is_safe_iter<'a, I>(mut iter: I) -> bool
+where
+    I: Iterator<Item = &'a u32>,
+{
+    let first = match iter.next() {
+        Some(val) => val,
+        None => return false, // Empty sequence is not safe
+    };
+    let second = match iter.next() {
+        Some(val) => val,
+        None => return true, // Single-element sequence is safe
+    };
+    let diff = *second as i32 - *first as i32;
 
-    // Check if differences between adjacent numbers are between 1 and 3
-    let valid = level.windows(2).all(|w| {
-        let diff = w[0].abs_diff(w[1]);
-        (1..=3).contains(&diff)
-    });
-    valid && (is_increasing || is_decreasing)
+    // Check initial conditions
+    if diff == 0 || diff.abs() > 3 {
+        return false;
+    }
+    let is_increasing = diff > 0;
+
+    let mut prev = second;
+    for curr in iter {
+        let diff = *curr as i32 - *prev as i32;
+        if diff == 0 || diff.abs() > 3 || (diff > 0) != is_increasing {
+            return false;
+        }
+        prev = curr;
+    }
+    true
 }
 
 pub fn generator(input: &str) -> Vec<Vec<u32>> {
@@ -23,21 +42,26 @@ pub fn generator(input: &str) -> Vec<Vec<u32>> {
 }
 
 pub fn part_1(input: &[Vec<u32>]) -> u32 {
-    input.iter().filter(|level| is_safe(level)).count() as u32
+    input
+        .iter()
+        .filter(|level| is_safe_iter(level.iter()))
+        .count() as u32
 }
 
 pub fn part_2(input: &[Vec<u32>]) -> u32 {
     input
         .iter()
         .filter(|level| {
-            if is_safe(level) {
+            if is_safe_iter(level.iter()) {
                 true
             } else {
-                // Try removing each level
                 (0..level.len()).any(|i| {
-                    let mut new_line = level.to_owned().clone();
-                    new_line.remove(i);
-                    is_safe(&new_line)
+                    let iter =
+                        level
+                            .iter()
+                            .enumerate()
+                            .filter_map(|(j, val)| if j != i { Some(val) } else { None });
+                    is_safe_iter(iter)
                 })
             }
         })

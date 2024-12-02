@@ -28,10 +28,7 @@ pub fn part_1(input: &ParseResult) -> u32 {
     left.sort_unstable();
     right.sort_unstable();
 
-    left.iter()
-        .zip(right)
-        .map(|(l, r)| (*l as i32 - *r as i32).unsigned_abs())
-        .sum()
+    left.iter().zip(right).map(|(l, r)| l.abs_diff(*r)).sum()
 }
 
 pub fn part_2(input: &ParseResult) -> u32 {
