@@ -2,53 +2,43 @@ use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
     hash::Hash,
+    rc::Rc,
 };
 
-type OrderingRules = HashMap<u32, HashSet<u32>>;
-type PageNumbers = Vec<Vec<u32>>;
-
-pub fn generator(input: &str) -> (OrderingRules, PageNumbers) {
-    let (ordering_rules_str, page_numbers_str) = input.split_once("\n\n").unwrap();
-
-    let ordering_rules =
-        ordering_rules_str
-            .lines()
-            .fold(HashMap::new(), |mut acc: HashMap<_, HashSet<_>>, line| {
-                let (left, right) = line.split_once('|').unwrap();
-                let n = left.parse::<u32>().unwrap();
-                let m = right.parse::<u32>().unwrap();
-                acc.entry(m).or_default().insert(n);
-                acc
-            });
-
-    let page_numbers = page_numbers_str
-        .lines()
-        .map(|line| line.split(',').map(|n| n.parse().unwrap()).collect())
-        .collect();
-
-    (ordering_rules, page_numbers)
+#[derive(Clone, Eq)]
+pub struct OrderedItem<T>
+where
+    T: Hash,
+{
+    value: T,
+    ordering_rules: Rc<HashMap<T, HashSet<T>>>,
 }
 
-fn is_valid_update<T>(page_numbers: &[T], ordering_rules: &HashMap<T, HashSet<T>>) -> bool
+impl<T> PartialEq for OrderedItem<T>
 where
-    T: PartialEq + Eq + Hash,
+    T: Eq + Hash,
 {
-    page_numbers.is_sorted_by(|n, m| {
-        if let Some(m_values) = ordering_rules.get(n) {
-            !m_values.contains(m)
-        } else {
-            true
-        }
-    })
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
 }
 
-fn reorder<T>(page_numbers: &mut [T], ordering_rules: &HashMap<T, HashSet<T>>)
+impl<T> PartialOrd for OrderedItem<T>
 where
-    T: PartialOrd + Ord + Hash,
+    T: Eq + Hash,
 {
-    page_numbers.sort_by(|n, m| {
-        if let Some(m_values) = ordering_rules.get(n) {
-            if m_values.contains(m) {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T> Ord for OrderedItem<T>
+where
+    T: Eq + Hash,
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        if let Some(m_values) = self.ordering_rules.get(&self.value) {
+            if m_values.contains(&other.value) {
                 Ordering::Greater
             } else {
                 Ordering::Less
@@ -56,32 +46,58 @@ where
         } else {
             Ordering::Equal
         }
-    });
+    }
 }
 
-pub fn part_1(input: &(OrderingRules, PageNumbers)) -> u32 {
-    let (ordering_rules, page_numbers) = input;
-    let filtered_page_numbers = page_numbers
-        .iter()
-        .filter(|nums| is_valid_update(nums, ordering_rules));
-    filtered_page_numbers
-        .map(|numbers| numbers.get(numbers.len() / 2).unwrap())
+type Updates<'a, T> = Vec<Vec<OrderedItem<T>>>;
+
+pub fn generator(input: &str) -> Updates<u32> {
+    let (ordering_rules_str, update_str) = input.split_once("\n\n").unwrap();
+
+    let ordering_rules = Rc::new(ordering_rules_str.lines().fold(
+        HashMap::new(),
+        |mut acc: HashMap<_, HashSet<_>>, line| {
+            let (left, right) = line.split_once('|').unwrap();
+            let n = left.parse::<u32>().unwrap();
+            let m = right.parse::<u32>().unwrap();
+            acc.entry(m).or_default().insert(n);
+            acc
+        },
+    ));
+
+    let updates = update_str
+        .lines()
+        .map(|line| {
+            line.split(',')
+                .map(|n| OrderedItem {
+                    value: n.parse::<u32>().unwrap(),
+                    ordering_rules: Rc::clone(&ordering_rules),
+                })
+                .collect()
+        })
+        .collect();
+    updates
+}
+
+pub fn part_1(input: &Updates<u32>) -> u32 {
+    let filtered_updates = input.iter().filter(|nums| nums.is_sorted());
+    filtered_updates
+        .map(|numbers| numbers.get(numbers.len() / 2).unwrap().value)
         .sum()
 }
 
-pub fn part_2(input: &(OrderingRules, PageNumbers)) -> u32 {
-    let (ordering_rules, page_numbers) = input;
-    page_numbers
+pub fn part_2(input: &Updates<u32>) -> u32 {
+    input
         .iter()
         // Get all invalid page numbers
-        .filter(|nums| !is_valid_update(nums, ordering_rules))
+        .filter(|nums| !nums.is_sorted())
         .cloned()
         .fold(0, |acc, mut nums| {
             // Sort page numbers to the correct order
-            reorder(&mut nums, ordering_rules);
+            nums.sort_unstable();
 
             // Get the middle value of newly valid page numbers
-            acc + nums[nums.len() / 2]
+            acc + nums[nums.len() / 2].value
         })
 }
 
