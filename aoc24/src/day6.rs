@@ -1,11 +1,9 @@
-use std::collections::HashSet;
-
 #[derive(Clone)]
 pub struct Map {
     grid: Vec<Vec<u8>>,
     guard_pos: (usize, usize),
     guard_dir: Direction,
-    visited: HashSet<(usize, usize)>,
+    visited: Vec<Vec<bool>>,
 }
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
@@ -16,10 +14,15 @@ enum Direction {
     West,
 }
 
+enum StepResult {
+    OutOfBounds,
+    Turn,
+    Step,
+}
+
 pub fn generator(input: &str) -> Map {
     let mut guard_dir = Direction::North;
     let mut guard_pos = (0, 0);
-    let mut visited = HashSet::new();
     let grid = input
         .lines()
         .enumerate()
@@ -49,10 +52,11 @@ pub fn generator(input: &str) -> Map {
                     }
                     _ => c,
                 })
-                .collect()
+                .collect::<Vec<_>>()
         })
-        .collect();
-    visited.insert(guard_pos);
+        .collect::<Vec<_>>();
+    let mut visited = vec![vec![false; grid[0].len()]; grid.len()];
+    visited[guard_pos.1][guard_pos.0] = true;
     Map {
         grid,
         guard_dir,
@@ -63,10 +67,10 @@ pub fn generator(input: &str) -> Map {
 
 impl Map {
     fn walk_until_stop(&mut self) {
-        while self.step() {}
+        while matches!(self.step(), StepResult::Step | StepResult::Turn) {}
     }
 
-    fn step(&mut self) -> bool {
+    fn step(&mut self) -> StepResult {
         let (new_x, new_y) = match self.guard_dir {
             Direction::North => (self.guard_pos.0, self.guard_pos.1.saturating_sub(1)),
             Direction::South => (self.guard_pos.0, self.guard_pos.1.saturating_add(1)),
@@ -77,32 +81,45 @@ impl Map {
             || new_y > self.grid.len() - 1
             || self.guard_pos == (new_x, new_y)
         {
-            return false;
+            return StepResult::OutOfBounds;
         }
 
         match self.grid[new_y][new_x] {
             b'.' => {
-                self.visited.insert((new_x, new_y));
+                self.visited[new_y][new_x] = true;
             }
             b'#' => {
                 self.rotate_right();
-                return true;
+                return StepResult::Turn;
             }
             _ => panic!("Found invalid character in grid"),
         }
         self.guard_pos = (new_x, new_y);
-        true
+        StepResult::Step
     }
 
     fn is_loop(&mut self) -> bool {
-        let mut visited_with_dir = HashSet::new();
-        while !visited_with_dir.contains(&(self.guard_pos, self.guard_dir)) {
-            visited_with_dir.insert((self.guard_pos, self.guard_dir));
-            if !self.step() {
+        let mut tortoise = self.clone();
+        let mut hare = self.clone();
+
+        loop {
+            // Tortoise takes one step
+            if let StepResult::OutOfBounds = tortoise.step() {
                 return false;
-            };
+            }
+
+            // Hare takes two steps
+            for _ in 0..2 {
+                if let StepResult::OutOfBounds = hare.step() {
+                    return false;
+                }
+            }
+
+            // Check if the tortoise and hare are in the same state
+            if tortoise.guard_pos == hare.guard_pos && tortoise.guard_dir == hare.guard_dir {
+                return true; // Loop detected
+            }
         }
-        true
     }
 
     fn rotate_right(&mut self) {
@@ -118,27 +135,38 @@ impl Map {
 pub fn part_1(input: &Map) -> u32 {
     let mut map = input.clone();
     map.walk_until_stop();
-    map.visited.len() as u32
+    map.visited
+        .iter()
+        .flat_map(|rows| rows.iter().filter(|&&v| v))
+        .count() as u32
 }
 
 pub fn part_2(input: &Map) -> u32 {
     let mut map = input.clone();
     let original_pos = map.guard_pos;
     let original_dir = map.guard_dir;
+    map.walk_until_stop();
+    map.guard_pos = original_pos;
+    map.guard_dir = original_dir;
+
     let mut n_loops = 0;
-    for i in 0..input.grid.len() {
-        for j in 0..input.grid[0].len() {
-            match map.grid[i][j] {
-                b'.' => map.grid[i][j] = b'#',
-                _ => continue,
-            }
-            if map.is_loop() {
-                n_loops += 1;
-            };
-            map.grid[i][j] = b'.';
-            map.guard_pos = original_pos;
-            map.guard_dir = original_dir;
+    for (i, j) in map
+        .visited
+        .clone()
+        .iter()
+        .enumerate()
+        .flat_map(|(i, rows)| rows.iter().enumerate().map(move |(j, _)| (i, j)))
+    {
+        match map.grid[i][j] {
+            b'.' => map.grid[i][j] = b'#',
+            _ => continue,
         }
+        if map.is_loop() {
+            n_loops += 1;
+        };
+        map.grid[i][j] = b'.';
+        map.guard_pos = original_pos;
+        map.guard_dir = original_dir;
     }
     n_loops
 }
