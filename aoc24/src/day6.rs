@@ -67,68 +67,97 @@ pub fn generator(input: &str) -> Map {
 
 impl Map {
     fn walk_until_stop(&mut self) {
-        while matches!(self.step(), StepResult::Step | StepResult::Turn) {}
+        let mut pos = self.guard_pos;
+        let mut dir = self.guard_dir;
+        while matches!(
+            self.step(&mut pos, &mut dir),
+            StepResult::Step | StepResult::Turn
+        ) {
+            self.visited[pos.1][pos.0] = true;
+        }
     }
 
-    fn step(&mut self) -> StepResult {
-        let (new_x, new_y) = match self.guard_dir {
-            Direction::North => (self.guard_pos.0, self.guard_pos.1.saturating_sub(1)),
-            Direction::South => (self.guard_pos.0, self.guard_pos.1.saturating_add(1)),
-            Direction::East => (self.guard_pos.0.saturating_add(1), self.guard_pos.1),
-            Direction::West => (self.guard_pos.0.saturating_sub(1), self.guard_pos.1),
-        };
-        if new_x > self.grid[0].len() - 1
-            || new_y > self.grid.len() - 1
-            || self.guard_pos == (new_x, new_y)
-        {
-            return StepResult::OutOfBounds;
-        }
-
-        match self.grid[new_y][new_x] {
-            b'.' => {
-                self.visited[new_y][new_x] = true;
-            }
-            b'#' => {
-                self.rotate_right();
-                return StepResult::Turn;
-            }
-            _ => panic!("Found invalid character in grid"),
-        }
-        self.guard_pos = (new_x, new_y);
-        StepResult::Step
-    }
-
-    fn is_loop(&mut self) -> bool {
-        let mut tortoise = self.clone();
-        let mut hare = self.clone();
+    fn is_loop(&self) -> bool {
+        let mut tortoise_pos = self.guard_pos;
+        let mut tortoise_dir = self.guard_dir;
+        let mut hare_pos = self.guard_pos;
+        let mut hare_dir = self.guard_dir;
 
         loop {
-            // Tortoise takes one step
-            if let StepResult::OutOfBounds = tortoise.step() {
+            // Move tortoise one step
+            if matches!(
+                self.step(&mut tortoise_pos, &mut tortoise_dir),
+                StepResult::OutOfBounds
+            ) {
                 return false;
             }
 
-            // Hare takes two steps
+            // Move hare two steps
             for _ in 0..2 {
-                if let StepResult::OutOfBounds = hare.step() {
+                if matches!(
+                    self.step(&mut hare_pos, &mut hare_dir),
+                    StepResult::OutOfBounds
+                ) {
                     return false;
                 }
             }
 
-            // Check if the tortoise and hare are in the same state
-            if tortoise.guard_pos == hare.guard_pos && tortoise.guard_dir == hare.guard_dir {
+            // Check if tortoise and hare meet
+            if tortoise_pos == hare_pos && tortoise_dir == hare_dir {
                 return true; // Loop detected
             }
         }
     }
 
-    fn rotate_right(&mut self) {
-        match self.guard_dir {
-            Direction::North => self.guard_dir = Direction::East,
-            Direction::South => self.guard_dir = Direction::West,
-            Direction::East => self.guard_dir = Direction::South,
-            Direction::West => self.guard_dir = Direction::North,
+    fn step(&self, pos: &mut (usize, usize), dir: &mut Direction) -> StepResult {
+        let (width, height) = (self.grid[0].len(), self.grid.len());
+
+        // Compute next position
+        let (new_x, new_y) = match dir {
+            Direction::North => {
+                if pos.1 == 0 {
+                    return StepResult::OutOfBounds;
+                }
+                (pos.0, pos.1 - 1)
+            }
+            Direction::South => {
+                if pos.1 + 1 >= height {
+                    return StepResult::OutOfBounds;
+                }
+                (pos.0, pos.1 + 1)
+            }
+            Direction::East => {
+                if pos.0 + 1 >= width {
+                    return StepResult::OutOfBounds;
+                }
+                (pos.0 + 1, pos.1)
+            }
+            Direction::West => {
+                if pos.0 == 0 {
+                    return StepResult::OutOfBounds;
+                }
+                (pos.0 - 1, pos.1)
+            }
         };
+
+        // Check grid cell
+        match self.grid[new_y][new_x] {
+            b'.' => {
+                *pos = (new_x, new_y);
+                StepResult::Step
+            }
+            b'#' => {
+                // Rotate right
+                *dir = match dir {
+                    Direction::North => Direction::East,
+                    Direction::East => Direction::South,
+                    Direction::South => Direction::West,
+                    Direction::West => Direction::North,
+                };
+                StepResult::Turn
+            }
+            _ => panic!("Invalid character in grid"),
+        }
     }
 }
 
