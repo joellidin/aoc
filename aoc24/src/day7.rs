@@ -1,89 +1,98 @@
-use std::collections::HashSet;
-
 pub fn generator(input: &str) -> Vec<(u64, Vec<u64>)> {
     input
         .lines()
         .map(|line| {
-            let (val_str, operands_str) = line.split_once(": ").unwrap();
-            let val = val_str.parse().unwrap();
+            let (val_str, operands_str) = line.split_once(": ").expect("Invalid input");
+            let val = val_str
+                .parse()
+                .expect("Target must be parsable to a number");
             let operands = operands_str
                 .split_whitespace()
-                .map(|n| n.parse().unwrap())
+                .map(|n| n.parse().expect("Operands must be parsable to a number"))
                 .collect();
             (val, operands)
         })
         .collect()
 }
 
-fn calculate_possible_values(numbers: &[u64], max_number: &u64, do_concat: bool) -> HashSet<u64> {
-    fn backtrack(
-        numbers: &[u64],
-        max_number: &u64,
-        index: usize,
-        current_result: u64,
-        results: &mut HashSet<u64>,
-        do_concat: bool,
+fn digit_count(mut n: u64) -> u32 {
+    if n == 0 {
+        return 1;
+    }
+    let mut count = 0;
+    while n > 0 {
+        n /= 10;
+        count += 1;
+    }
+    count
+}
+
+fn concat_numbers(a: u64, b: u64) -> Option<u64> {
+    let digits = digit_count(b);
+    a.checked_mul(10_u64.pow(digits))
+        .and_then(|val| val.checked_add(b))
+}
+
+fn is_possible_calibration(
+    numbers: &[u64],
+    target: u64,
+    index: usize,
+    current_result: u64,
+    do_concat: bool,
+) -> bool {
+    // Pruning
+    if current_result > target {
+        return false;
+    }
+
+    // If we've reached the end and current_result is the target, return true
+    if index == numbers.len() {
+        return current_result == target;
+    }
+
+    let next_num = numbers[index];
+
+    // Try addition
+    if is_possible_calibration(
+        numbers,
+        target,
+        index + 1,
+        current_result + next_num,
+        do_concat,
     ) {
-        if &current_result > max_number {
-            return;
-        }
-        if &current_result == max_number {
-            results.insert(*max_number);
-            return;
-        }
+        return true;
+    }
 
-        if index == numbers.len() {
-            results.insert(current_result);
-            return;
-        }
+    // Try multiplication
+    if is_possible_calibration(
+        numbers,
+        target,
+        index + 1,
+        current_result * next_num,
+        do_concat,
+    ) {
+        return true;
+    }
 
-        // Apply addition
-        backtrack(
-            numbers,
-            max_number,
-            index + 1,
-            current_result + numbers[index],
-            results,
-            do_concat,
-        );
-        // Apply multiplication
-        backtrack(
-            numbers,
-            max_number,
-            index + 1,
-            current_result * numbers[index],
-            results,
-            do_concat,
-        );
-        if do_concat {
-            backtrack(
-                numbers,
-                max_number,
-                index + 1,
-                format!("{}{}", current_result, numbers[index])
-                    .parse()
-                    .unwrap(),
-                results,
-                do_concat,
-            );
+    // Try concatenation
+    if do_concat {
+        if let Some(concat_res) = concat_numbers(current_result, next_num) {
+            if concat_res <= target
+                && is_possible_calibration(numbers, target, index + 1, concat_res, do_concat)
+            {
+                return true;
+            }
         }
     }
 
-    let mut results = HashSet::new();
-
-    if !numbers.is_empty() {
-        backtrack(numbers, max_number, 1, numbers[0], &mut results, do_concat);
-    }
-
-    results
+    // If none of the branches worked out, return false
+    false
 }
-fn can_be_solved(val: &u64, operands: &[u64], do_concat: bool) -> bool {
-    calculate_possible_values(operands, val, do_concat).contains(val)
-}
+
 pub fn part_1(input: &[(u64, Vec<u64>)]) -> u64 {
     input
         .iter()
-        .filter(|(val, nums)| can_be_solved(val, nums, false))
+        .filter(|(val, nums)| is_possible_calibration(nums, *val, 1, nums[0], false))
         .map(|(val, _)| val)
         .sum()
 }
@@ -91,7 +100,7 @@ pub fn part_1(input: &[(u64, Vec<u64>)]) -> u64 {
 pub fn part_2(input: &[(u64, Vec<u64>)]) -> u64 {
     input
         .iter()
-        .filter(|(val, nums)| can_be_solved(val, nums, true))
+        .filter(|(val, nums)| is_possible_calibration(nums, *val, 1, nums[0], true))
         .map(|(val, _)| val)
         .sum()
 }
