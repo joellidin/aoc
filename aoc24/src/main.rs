@@ -9,16 +9,18 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day10;
 
 aoc_main::main! {
     year 2024;
-    day1 : generator => part_1, part_2;
-    day2 : generator => part_1, part_2;
-    day3 : generator => part_1, part_2;
-    day4 : generator => part_1, part_2;
-    day5 : generator => part_1, part_2;
-    day6 : generator => part_1, part_2;
-    day7 : generator => part_1, part_2;
-    day8 : generator => part_1, part_2;
-    day9 : generator => part_1, part_2;
+    day1  : generator => part_1, part_2;
+    day2  : generator => part_1, part_2;
+    day3  : generator => part_1, part_2;
+    day4  : generator => part_1, part_2;
+    day5  : generator => part_1, part_2;
+    day6  : generator => part_1, part_2;
+    day7  : generator => part_1, part_2;
+    day8  : generator => part_1, part_2;
+    day9  : generator => part_1, part_2;
+    day10 : generator => part_1, part_2;
 }
