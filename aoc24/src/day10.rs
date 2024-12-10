@@ -9,14 +9,14 @@ pub fn generator(input: &str) -> Vec<Vec<u32>> {
 
 fn count_paths(
     map: &[Vec<u32>],
-    current: (isize, isize),
-    visited_ends: &mut Option<&mut HashSet<(isize, isize)>>,
+    current: (usize, usize),
+    visited_ends: &mut Option<&mut HashSet<(usize, usize)>>,
 ) -> u32 {
     let neighbours = get_next(map, current);
     let mut total_paths = 0;
 
     for neighbour in neighbours {
-        let height = map[neighbour.0 as usize][neighbour.1 as usize];
+        let height = map[neighbour.0][neighbour.1];
         if height == 9 {
             if let Some(ends) = visited_ends.as_mut() {
                 if !ends.contains(&neighbour) {
@@ -33,22 +33,24 @@ fn count_paths(
     total_paths
 }
 
-fn get_next(map: &[Vec<u32>], point: (isize, isize)) -> Vec<(isize, isize)> {
-    let mut neighbours = Vec::new();
-    for (di, dj) in [(-1, 0), (0, -1), (1, 0), (0, 1)] {
-        let new_point = (point.0 + di, point.1 + dj);
-        if new_point.0 >= 0
-            && new_point.1 >= 0
-            && new_point.0 < map.len() as isize
-            && new_point.1 < map[0].len() as isize
-            && map[new_point.0 as usize][new_point.1 as usize]
-                - map[point.0 as usize][point.1 as usize]
-                == 1
-        {
-            neighbours.push(new_point);
-        }
-    }
-    neighbours
+fn get_next(
+    map: &[Vec<u32>],
+    point: (usize, usize),
+) -> impl Iterator<Item = (usize, usize)> + use<'_> {
+    [(-1, 0), (0, -1), (1, 0), (0, 1)]
+        .iter()
+        .filter_map(move |(di, dj)| {
+            let new_point = (point.0 as isize + di, point.1 as isize + dj);
+            if new_point.0 >= 0
+                && new_point.1 >= 0
+                && new_point.0 < map.len() as isize
+                && new_point.1 < map[0].len() as isize
+                && map[new_point.0 as usize][new_point.1 as usize] - map[point.0][point.1] == 1
+            {
+                return Some((new_point.0 as usize, new_point.1 as usize));
+            }
+            None
+        })
 }
 
 pub fn part_1(input: &[Vec<u32>]) -> u32 {
@@ -57,9 +59,8 @@ pub fn part_1(input: &[Vec<u32>]) -> u32 {
     for (i, row) in input.iter().enumerate() {
         for (j, &height) in row.iter().enumerate() {
             if height == 0 {
-                let start = (i as isize, j as isize);
                 let mut visited = HashSet::new();
-                let score = count_paths(input, start, &mut Some(&mut visited));
+                let score = count_paths(input, (i, j), &mut Some(&mut visited));
                 total_score += score;
             }
         }
@@ -73,8 +74,7 @@ pub fn part_2(input: &[Vec<u32>]) -> u32 {
     for (i, row) in input.iter().enumerate() {
         for (j, &height) in row.iter().enumerate() {
             if height == 0 {
-                let start = (i as isize, j as isize);
-                let score = count_paths(input, start, &mut None);
+                let score = count_paths(input, (i, j), &mut None);
                 total_score += score;
             }
         }
