@@ -88,9 +88,8 @@ pub fn part_2(input: &[Vec<char>]) -> u32 {
                 continue;
             }
             let (area, _, seen) = traverse(input, (i, j));
-            dbg!(&input[i][j]);
             let n_sides = count_sides(&seen);
-            score += dbg!(area) * dbg!(n_sides);
+            score += area * n_sides;
             visited = visited.union(&seen).copied().collect();
         }
     }
