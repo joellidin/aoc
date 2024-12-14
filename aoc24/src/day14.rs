@@ -1,45 +1,31 @@
+use aoc_utils::prelude::*;
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Point {
-    x: i32,
-    y: i32,
-}
-
 pub struct Robot {
-    pos: Point,
-    vel: Point,
+    pos: Vec2<i32>,
+    vel: Vec2<i32>,
 }
 
 pub fn generator(input: &str) -> Vec<Robot> {
     input
         .lines()
         .map(|line| {
-            let (p_str, v_str) = line.split_once(' ').expect("Invalid input format");
-            let p_str = p_str.strip_prefix("p=").expect("Missing 'p=' prefix");
-            let v_str = v_str.strip_prefix("v=").expect("Missing 'v=' prefix");
-
-            let (p_x, p_y) = p_str.split_once(',').expect("Invalid position format");
-            let (v_x, v_y) = v_str.split_once(',').expect("Invalid velocity format");
+            let &[p_x, p_y, v_x, v_y, ..] = extract_integers::<i32>(line).as_slice() else {
+                panic!("Could not find numbers")
+            };
 
             Robot {
-                pos: Point {
-                    x: p_x.parse().expect("Invalid x position"),
-                    y: p_y.parse().expect("Invalid y position"),
-                },
-                vel: Point {
-                    x: v_x.parse().expect("Invalid x velocity"),
-                    y: v_y.parse().expect("Invalid y velocity"),
-                },
+                pos: (p_x, p_y).into(),
+                vel: (v_x, v_y).into(),
             }
         })
         .collect()
 }
 
 #[allow(dead_code)]
-fn print_robots(points: &[Point], width: i32, height: i32) {
+fn print_robots(points: &[Vec2<i32>], width: i32, height: i32) {
     let mut grid = vec![vec!['.'; width as usize]; height as usize];
-    let mut counts: HashMap<Point, usize> = HashMap::new();
+    let mut counts: HashMap<Vec2<i32>, usize> = HashMap::new();
 
     // Count robots at each point
     for point in points {
@@ -65,18 +51,18 @@ fn wrap_coord(value: i32, max: i32) -> i32 {
     }
     val
 }
-fn elapse(robots: &[Robot], time: u32, width: i32, height: i32) -> Vec<Point> {
+fn elapse(robots: &[Robot], time: u32, width: i32, height: i32) -> Vec<Vec2<i32>> {
     robots
         .iter()
         .map(|robot| {
             let x = wrap_coord(robot.pos.x + robot.vel.x * time as i32, width);
             let y = wrap_coord(robot.pos.y + robot.vel.y * time as i32, height);
-            Point { x, y }
+            Vec2 { x, y }
         })
         .collect()
 }
 
-fn find_quadrants(robots: &[Point], width: i32, height: i32) -> (u32, u32, u32, u32) {
+fn find_quadrants(robots: &[Vec2<i32>], width: i32, height: i32) -> (u32, u32, u32, u32) {
     robots.iter().fold((0, 0, 0, 0), |(q1, q2, q3, q4), p| {
         if p.x < width / 2 && p.y < height / 2 {
             (1 + q1, q2, q3, q4)
@@ -111,14 +97,8 @@ pub fn part_2(input: &[Robot]) -> u32 {
                 .iter()
                 .find(|&&point| {
                     (1..7).all(|j| {
-                        let new_left_point = Point {
-                            x: point.x - j,
-                            y: point.y + j,
-                        };
-                        let new_right_point = Point {
-                            x: point.x + j,
-                            y: point.y + j,
-                        };
+                        let new_left_point = (point.x - j, point.y + j).into();
+                        let new_right_point = (point.x + j, point.y + j).into();
                         positions_set.contains(&new_left_point)
                             && positions_set.contains(&new_right_point)
                     })
