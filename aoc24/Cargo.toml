@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 aoc-main = { version = "0.5.0", features = ["bench"] }
+aoc_utils = { path = "../aoc_utils" }
