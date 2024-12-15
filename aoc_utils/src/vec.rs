@@ -34,13 +34,45 @@ use std::fmt::Debug;
 #[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
 pub struct Vec2<T>
 where
-    T: TryFrom<i64> + Debug,
+    T: TryFrom<i64> + TryInto<usize> + Debug,
     <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
 {
     /// The x-coordinate.
     pub x: T,
     /// The y-coordinate.
     pub y: T,
+}
+
+impl<T> Vec2<T>
+where
+    T: TryFrom<i64> + TryInto<usize> + Debug + Copy,
+    <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    /// Returns the row index (`i`) as `usize`.
+    ///
+    /// This is a shorthand accessor for the row (y-coordinate).
+    /// Equivalent to `self.y` cast to `usize`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the conversion to `usize` fails.
+    pub fn i(&self) -> usize {
+        self.y.try_into().expect("Failed to convert y to usize")
+    }
+
+    /// Returns the column index (`j`) as `usize`.
+    ///
+    /// This is a shorthand accessor for the column (x-coordinate).
+    /// Equivalent to `self.x` cast to `usize`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the conversion to `usize` fails.
+    pub fn j(&self) -> usize {
+        self.x.try_into().expect("Failed to convert x to usize")
+    }
 }
 
 /// A 3D vector with generic coordinates.
@@ -78,8 +110,9 @@ where
 #[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
 pub struct Vec3<T>
 where
-    T: TryFrom<i64> + Debug,
+    T: TryFrom<i64> + TryInto<usize> + Debug,
     <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
 {
     /// The x-coordinate.
     pub x: T,
@@ -89,14 +122,58 @@ where
     pub z: T,
 }
 
+impl<T> Vec3<T>
+where
+    T: TryFrom<i64> + TryInto<usize> + Debug + Copy,
+    <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    /// Returns the row index (`i`) as `usize`.
+    ///
+    /// This is a shorthand accessor for the row (y-coordinate).
+    /// Equivalent to `self.y` cast to `usize`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the conversion to `usize` fails.
+    pub fn i(&self) -> usize {
+        self.y.try_into().expect("Failed to convert y to usize")
+    }
+
+    /// Returns the column index (`j`) as `usize`.
+    ///
+    /// This is a shorthand accessor for the column (x-coordinate).
+    /// Equivalent to `self.x` cast to `usize`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the conversion to `usize` fails.
+    pub fn j(&self) -> usize {
+        self.x.try_into().expect("Failed to convert x to usize")
+    }
+
+    /// Returns the depth index (`k`) as `usize`.
+    ///
+    /// This is a shorthand accessor for the depth (z-coordinate).
+    /// Equivalent to `self.z` cast to `usize`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the conversion to `usize` fails.
+    pub fn k(&self) -> usize {
+        self.z.try_into().expect("Failed to convert z to usize")
+    }
+}
+
 // Macros to implement From for multiple integer types
 macro_rules! impl_from_tuple_for_vec2 {
     ($($from_type:ty),+) => {
         $(
             impl<T> From<($from_type, $from_type)> for Vec2<T>
             where
-                T: TryFrom<i64> + Debug,
+                T: TryFrom<i64> + TryInto<usize> + Debug,
                 <T as TryFrom<i64>>::Error: Debug,
+                <T as TryInto<usize>>::Error: Debug,
             {
                 #[doc = concat!("Converts a tuple `(x, y)` of type `", stringify!($from_type), "` into a `Vec2<T>`.")]
                 #[doc = ""]
@@ -132,8 +209,9 @@ macro_rules! impl_from_tuple_for_vec3 {
         $(
             impl<T> From<($from_type, $from_type, $from_type)> for Vec3<T>
             where
-                T: TryFrom<i64> + Debug,
+                T: TryFrom<i64> + TryInto<usize> + Debug,
                 <T as TryFrom<i64>>::Error: Debug,
+                <T as TryInto<usize>>::Error: Debug,
             {
                 #[doc = concat!("Converts a tuple `(x, y, z)` of type `", stringify!($from_type),"` into a `Vec3<T>`.")]
                 #[doc = ""]
@@ -180,6 +258,8 @@ mod tests {
     fn test_vec2_i32_positive() {
         let vec: Vec2<i32> = (10, 20).into();
         assert_eq!(vec, Vec2 { x: 10, y: 20 });
+        assert_eq!(vec.i(), 20_usize);
+        assert_eq!(vec.j(), 10_usize);
     }
 
     #[test]
@@ -192,12 +272,21 @@ mod tests {
     fn test_vec2_u32_positive() {
         let vec: Vec2<u32> = (42, 100).into();
         assert_eq!(vec, Vec2 { x: 42, y: 100 });
+        assert_eq!(vec.i(), 100_usize);
+        assert_eq!(vec.j(), 42_usize);
     }
 
     #[test]
     #[should_panic(expected = "Failed to convert x")]
     fn test_vec2_u32_negative_panic() {
         let _vec: Vec2<u32> = (-5, 10).into(); // Should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "Failed to convert x to usize")]
+    fn test_vec2_usize_conversion_panic() {
+        let _vec: Vec2<i32> = (-5, 10).into();
+        _vec.j(); // Should panic
     }
 
     #[test]
@@ -210,6 +299,8 @@ mod tests {
                 y: 2_000_000
             }
         );
+        assert_eq!(vec.i(), 2_000_000_usize);
+        assert_eq!(vec.j(), 1_000_000_usize);
     }
 
     // Vec3 Tests
@@ -224,6 +315,9 @@ mod tests {
                 z: 30
             }
         );
+        assert_eq!(vec.i(), 20_usize);
+        assert_eq!(vec.j(), 10_usize);
+        assert_eq!(vec.k(), 30_usize);
     }
 
     #[test]
@@ -246,6 +340,13 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Failed to convert z to usize")]
+    fn test_vec3_usize_conversion_panic() {
+        let _vec: Vec3<i32> = (10, 20, -128).into();
+        _vec.k(); // Should panic
+    }
+
+    #[test]
     fn test_vec3_large_values() {
         let vec: Vec3<usize> = (1_000_000, 2_000_000, 3_000_000).into();
         assert_eq!(
@@ -256,6 +357,9 @@ mod tests {
                 z: 3_000_000
             }
         );
+        assert_eq!(vec.i(), 2_000_000_usize);
+        assert_eq!(vec.j(), 1_000_000_usize);
+        assert_eq!(vec.k(), 3_000_000_usize);
     }
 
     #[test]
