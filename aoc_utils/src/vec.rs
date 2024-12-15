@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Add};
 
 /// A 2D vector with generic coordinates.
 ///
@@ -72,6 +72,124 @@ where
     /// Panics if the conversion to `usize` fails.
     pub fn j(&self) -> usize {
         self.x.try_into().expect("Failed to convert x to usize")
+    }
+}
+
+/// Implements the `Add` trait for `Vec2<T>`.
+///
+/// This allows adding two instances of `Vec2<T>` element-wise, returning a new `Vec2<T>`.
+///
+/// # Generic Requirements
+///
+/// - `T` must implement the following traits:
+///   - `TryFrom<i64>`: Ensures conversion from `i64` when needed.
+///   - `TryInto<usize>`: Supports casting to `usize` for compatibility.
+///   - `Add<Output = T>`: Supports addition.
+///   - `Debug`: Enables debug output.
+///   - `Copy`: Allows value copying.
+///
+/// - The associated error types for `TryFrom<i64>` and `TryInto<usize>` must also implement `Debug`.
+///
+/// # Element-Wise Addition
+///
+/// - `x` is added with `other.x`.
+/// - `y` is added with `other.y`.
+///
+/// # Example
+///
+/// ```rust
+/// use aoc_utils::vec::Vec2;
+///
+/// let v1: Vec2<i32> = Vec2 { x: 10, y: 20 };
+/// let v2: Vec2<i32> = Vec2 { x: 5, y: 15 };
+/// let result = v1 + v2;
+///
+/// assert_eq!(result, Vec2 { x: 15, y: 35 });
+/// ```
+impl<T> Add for Vec2<T>
+where
+    T: TryFrom<i64> + TryInto<usize> + Add<Output = T> + Debug + Copy,
+    <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    type Output = Self;
+
+    /// Adds two `Vec2<T>` instances element-wise.
+    ///
+    /// - Returns a new `Vec2<T>` where:
+    ///   - `x = self.x + other.x`
+    ///   - `y = self.y + other.y`
+    ///
+    /// # Panics
+    ///
+    /// This function **does not panic**, assuming `T` supports safe addition.
+    fn add(self, other: Self) -> Self::Output {
+        Vec2 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+/// Implements the `Add` trait for adding a tuple `(T, T)` to a `Vec2<T>`.
+///
+/// This allows adding a 2-tuple directly to a `Vec2<T>` instance, performing element-wise addition.
+///
+/// # Generic Requirements
+///
+/// - `T` must implement the following traits:
+///   - `TryFrom<i64>`: Enables conversion from `i64`.
+///   - `TryInto<usize>`: Supports casting to `usize`.
+///   - `Add<Output = T>`: Supports addition.
+///   - `Debug`: Required for debug output.
+///   - `Copy`: Required for copying values.
+///
+/// - The associated error types for `TryFrom<i64>` and `TryInto<usize>` must also implement `Debug`.
+///
+/// # Element-Wise Addition
+///
+/// - `x` is added with `other.0`
+/// - `y` is added with `other.1`
+///
+/// The result is a new `Vec2<T>` containing the summed values.
+///
+/// # Example
+///
+/// ```rust
+/// use aoc_utils::vec::Vec2;
+///
+/// let vec = Vec2 { x: 10, y: 20 };
+/// let tuple = (5, 15);
+/// let result = vec + tuple;
+///
+/// assert_eq!(result, Vec2 { x: 15, y: 35 });
+/// ```
+///
+/// # Panics
+///
+/// This implementation **does not panic**, assuming `T` supports safe addition.
+impl<T> Add<(T, T)> for Vec2<T>
+where
+    T: TryFrom<i64> + TryInto<usize> + Add<Output = T> + Debug + Copy,
+    <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    type Output = Self;
+
+    /// Adds a tuple `(T, T)` to a `Vec2<T>` element-wise.
+    ///
+    /// - Returns a new `Vec2<T>` where:
+    ///   - `x = self.x + other.0`
+    ///   - `y = self.y + other.1`
+    ///
+    /// # Panics
+    ///
+    /// This function **does not panic**, assuming `T` supports safe addition.
+    fn add(self, other: (T, T)) -> Self::Output {
+        Vec2 {
+            x: self.x + other.0,
+            y: self.y + other.1,
+        }
     }
 }
 
@@ -165,6 +283,136 @@ where
     }
 }
 
+/// Implements the `Add` trait for `Vec3<T>`.
+///
+/// This enables element-wise addition of two `Vec3<T>` instances, producing a new `Vec3<T>`.
+///
+/// # Generic Requirements
+///
+/// - `T` must implement the following traits:
+///   - `TryFrom<i64>`: Allows type conversion from `i64`.
+///   - `TryInto<usize>`: Enables casting to `usize`.
+///   - `Add<Output = T>`: Supports addition.
+///   - `Debug`: Required for debug output.
+///   - `Copy`: Allows value copying.
+///
+/// - The associated error types for `TryFrom<i64>` and `TryInto<usize>` must also implement `Debug`.
+///
+/// # Element-Wise Addition
+///
+/// - `x` is added with `other.x`
+/// - `y` is added with `other.y`
+/// - `z` is added with `other.z`
+///
+/// The result is a new `Vec3<T>` containing the summed values.
+///
+/// # Example
+///
+/// ```rust
+/// use aoc_utils::vec::Vec3;
+///
+/// let vec1 = Vec3 { x: 10, y: 20, z: 30 };
+/// let vec2 = Vec3 { x: 5, y: 15, z: 25 };
+/// let result = vec1 + vec2;
+///
+/// assert_eq!(result, Vec3 { x: 15, y: 35, z: 55 });
+/// ```
+///
+/// # Panics
+///
+/// This implementation **does not panic**, provided `T` supports safe addition.
+impl<T> Add for Vec3<T>
+where
+    T: TryFrom<i64> + TryInto<usize> + Add<Output = T> + Debug + Copy,
+    <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    type Output = Self;
+
+    /// Adds two `Vec3<T>` instances element-wise.
+    ///
+    /// - Returns a new `Vec3<T>` where:
+    ///   - `x = self.x + other.x`
+    ///   - `y = self.y + other.y`
+    ///   - `z = self.z + other.z`
+    ///
+    /// # Panics
+    ///
+    /// This function **does not panic**, assuming `T` supports safe addition.
+    fn add(self, other: Self) -> Self::Output {
+        Vec3 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
+/// Implements the `Add` trait for adding a tuple `(T, T, T)` to a `Vec3<T>`.
+///
+/// This allows adding a 3-tuple directly to a `Vec3<T>` instance, performing element-wise addition.
+///
+/// # Generic Requirements
+///
+/// - `T` must implement the following traits:
+///   - `TryFrom<i64>`: Allows type conversion from `i64`.
+///   - `TryInto<usize>`: Enables casting to `usize`.
+///   - `Add<Output = T>`: Supports addition.
+///   - `Debug`: Required for debug output.
+///   - `Copy`: Required to allow value copying.
+///
+/// - The associated error types for `TryFrom<i64>` and `TryInto<usize>` must also implement `Debug`.
+///
+/// # Element-Wise Addition
+///
+/// - `x` is added with `other.0`
+/// - `y` is added with `other.1`
+/// - `z` is added with `other.2`
+///
+/// The result is a new `Vec3<T>` containing the summed values.
+///
+/// # Example
+///
+/// ```rust
+/// use aoc_utils::vec::Vec3;
+///
+/// let vec = Vec3 { x: 10, y: 20, z: 30 };
+/// let tuple = (5, 15, 25);
+/// let result = vec + tuple;
+///
+/// assert_eq!(result, Vec3 { x: 15, y: 35, z: 55 });
+/// ```
+///
+/// # Panics
+///
+/// This implementation **does not panic**, provided `T` supports safe addition.
+impl<T> Add<(T, T, T)> for Vec3<T>
+where
+    T: TryFrom<i64> + TryInto<usize> + Add<Output = T> + Debug + Copy,
+    <T as TryFrom<i64>>::Error: Debug,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    type Output = Self;
+
+    /// Adds a tuple `(T, T, T)` to a `Vec3<T>` element-wise.
+    ///
+    /// - Returns a new `Vec3<T>` where:
+    ///   - `x = self.x + other.0`
+    ///   - `y = self.y + other.1`
+    ///   - `z = self.z + other.2`
+    ///
+    /// # Panics
+    ///
+    /// This function **does not panic**, assuming `T` supports safe addition.
+    fn add(self, other: (T, T, T)) -> Self::Output {
+        Vec3 {
+            x: self.x + other.0,
+            y: self.y + other.1,
+            z: self.z + other.2,
+        }
+    }
+}
+
 // Macros to implement From for multiple integer types
 macro_rules! impl_from_tuple_for_vec2 {
     ($($from_type:ty),+) => {
@@ -253,151 +501,211 @@ impl_from_tuple_for_vec3!(i8, i16, i32, i64, isize, u8, u16, u32, u64, usize);
 mod tests {
     use super::*;
 
-    // Vec2 Tests
-    #[test]
-    fn test_vec2_i32_positive() {
-        let vec: Vec2<i32> = (10, 20).into();
-        assert_eq!(vec, Vec2 { x: 10, y: 20 });
-        assert_eq!(vec.i(), 20_usize);
-        assert_eq!(vec.j(), 10_usize);
+    mod vec2_tests {
+        use super::*;
+
+        #[test]
+        fn positive_i32_values() {
+            let vec: Vec2<i32> = (10, 20).into();
+            assert_eq!(vec, Vec2 { x: 10, y: 20 });
+            assert_eq!(vec.i(), 20_usize);
+            assert_eq!(vec.j(), 10_usize);
+        }
+
+        #[test]
+        fn negative_i32_values() {
+            let vec: Vec2<i32> = (-15, -25).into();
+            assert_eq!(vec, Vec2 { x: -15, y: -25 });
+        }
+
+        #[test]
+        fn positive_u32_values() {
+            let vec: Vec2<u32> = (42, 100).into();
+            assert_eq!(vec, Vec2 { x: 42, y: 100 });
+            assert_eq!(vec.i(), 100_usize);
+            assert_eq!(vec.j(), 42_usize);
+        }
+
+        #[test]
+        #[should_panic(expected = "Failed to convert x")]
+        fn negative_u32_values_panic() {
+            let _vec: Vec2<u32> = (-5, 10).into();
+        }
+
+        #[test]
+        #[should_panic(expected = "Failed to convert x to usize")]
+        fn usize_conversion_panic() {
+            let _vec: Vec2<i32> = (-5, 10).into();
+            _vec.j();
+        }
+
+        #[test]
+        fn large_usize_values() {
+            let vec: Vec2<usize> = (1_000_000, 2_000_000).into();
+            assert_eq!(
+                vec,
+                Vec2 {
+                    x: 1_000_000,
+                    y: 2_000_000
+                }
+            );
+            assert_eq!(vec.i(), 2_000_000_usize);
+            assert_eq!(vec.j(), 1_000_000_usize);
+        }
+
+        // Add trait tests
+        #[test]
+        fn add_vec2() {
+            let v1: Vec2<i32> = Vec2 { x: 10, y: 20 };
+            let v2: Vec2<i32> = Vec2 { x: 5, y: 15 };
+            let result = v1 + v2;
+            assert_eq!(result, Vec2 { x: 15, y: 35 });
+        }
+
+        #[test]
+        fn add_tuple_to_vec2() {
+            let vec: Vec2<i32> = Vec2 { x: 10, y: 20 };
+            let result = vec + (5, 15);
+            assert_eq!(result, Vec2 { x: 15, y: 35 });
+        }
     }
 
-    #[test]
-    fn test_vec2_i32_negative() {
-        let vec: Vec2<i32> = (-15, -25).into();
-        assert_eq!(vec, Vec2 { x: -15, y: -25 });
-    }
+    mod vec3_tests {
+        use super::*;
 
-    #[test]
-    fn test_vec2_u32_positive() {
-        let vec: Vec2<u32> = (42, 100).into();
-        assert_eq!(vec, Vec2 { x: 42, y: 100 });
-        assert_eq!(vec.i(), 100_usize);
-        assert_eq!(vec.j(), 42_usize);
-    }
+        #[test]
+        fn positive_i32_values() {
+            let vec: Vec3<i32> = (10, 20, 30).into();
+            assert_eq!(
+                vec,
+                Vec3 {
+                    x: 10,
+                    y: 20,
+                    z: 30
+                }
+            );
+            assert_eq!(vec.i(), 20_usize);
+            assert_eq!(vec.j(), 10_usize);
+            assert_eq!(vec.k(), 30_usize);
+        }
 
-    #[test]
-    #[should_panic(expected = "Failed to convert x")]
-    fn test_vec2_u32_negative_panic() {
-        let _vec: Vec2<u32> = (-5, 10).into(); // Should panic
-    }
+        #[test]
+        fn negative_i32_values() {
+            let vec: Vec3<i32> = (-15, -25, -35).into();
+            assert_eq!(
+                vec,
+                Vec3 {
+                    x: -15,
+                    y: -25,
+                    z: -35
+                }
+            );
+        }
 
-    #[test]
-    #[should_panic(expected = "Failed to convert x to usize")]
-    fn test_vec2_usize_conversion_panic() {
-        let _vec: Vec2<i32> = (-5, 10).into();
-        _vec.j(); // Should panic
-    }
+        #[test]
+        #[should_panic(expected = "Failed to convert z")]
+        fn out_of_range_panic() {
+            let _vec: Vec3<i8> = (10, 20, 128).into(); // i8 can't hold 128
+        }
 
-    #[test]
-    fn test_vec2_large_values() {
-        let vec: Vec2<usize> = (1_000_000, 2_000_000).into();
-        assert_eq!(
-            vec,
-            Vec2 {
-                x: 1_000_000,
-                y: 2_000_000
-            }
-        );
-        assert_eq!(vec.i(), 2_000_000_usize);
-        assert_eq!(vec.j(), 1_000_000_usize);
-    }
+        #[test]
+        #[should_panic(expected = "Failed to convert z to usize")]
+        fn usize_conversion_panic() {
+            let _vec: Vec3<i32> = (10, 20, -128).into();
+            _vec.k();
+        }
 
-    // Vec3 Tests
-    #[test]
-    fn test_vec3_i32_positive() {
-        let vec: Vec3<i32> = (10, 20, 30).into();
-        assert_eq!(
-            vec,
-            Vec3 {
+        #[test]
+        fn large_usize_values() {
+            let vec: Vec3<usize> = (1_000_000, 2_000_000, 3_000_000).into();
+            assert_eq!(
+                vec,
+                Vec3 {
+                    x: 1_000_000,
+                    y: 2_000_000,
+                    z: 3_000_000
+                }
+            );
+            assert_eq!(vec.i(), 2_000_000_usize);
+            assert_eq!(vec.j(), 1_000_000_usize);
+            assert_eq!(vec.k(), 3_000_000_usize);
+        }
+
+        #[test]
+        fn from_i64_values() {
+            let vec: Vec3<i64> = (10_i64, 20_i64, 30_i64).into();
+            assert_eq!(
+                vec,
+                Vec3 {
+                    x: 10,
+                    y: 20,
+                    z: 30
+                }
+            );
+        }
+
+        #[test]
+        fn from_i32_values() {
+            let vec: Vec3<i32> = (10_i32, -20_i32, 30_i32).into();
+            assert_eq!(
+                vec,
+                Vec3 {
+                    x: 10,
+                    y: -20,
+                    z: 30
+                }
+            );
+        }
+
+        #[test]
+        fn from_u32_values() {
+            let vec: Vec3<u32> = (42_u32, 84_u32, 168_u32).into();
+            assert_eq!(
+                vec,
+                Vec3 {
+                    x: 42,
+                    y: 84,
+                    z: 168
+                }
+            );
+        }
+
+        // Add trait tests
+        #[test]
+        fn add_vec3() {
+            let v1: Vec3<i32> = Vec3 {
                 x: 10,
                 y: 20,
-                z: 30
-            }
-        );
-        assert_eq!(vec.i(), 20_usize);
-        assert_eq!(vec.j(), 10_usize);
-        assert_eq!(vec.k(), 30_usize);
-    }
+                z: 30,
+            };
+            let v2: Vec3<i32> = Vec3 { x: 5, y: 15, z: 25 };
+            let result = v1 + v2;
+            assert_eq!(
+                result,
+                Vec3 {
+                    x: 15,
+                    y: 35,
+                    z: 55
+                }
+            );
+        }
 
-    #[test]
-    fn test_vec3_i32_negative() {
-        let vec: Vec3<i32> = (-15, -25, -35).into();
-        assert_eq!(
-            vec,
-            Vec3 {
-                x: -15,
-                y: -25,
-                z: -35
-            }
-        );
-    }
-
-    #[test]
-    #[should_panic(expected = "Failed to convert z")]
-    fn test_vec3_out_of_range_panic() {
-        let _vec: Vec3<i8> = (10, 20, 128).into(); // i8 can't hold 128, should panic
-    }
-
-    #[test]
-    #[should_panic(expected = "Failed to convert z to usize")]
-    fn test_vec3_usize_conversion_panic() {
-        let _vec: Vec3<i32> = (10, 20, -128).into();
-        _vec.k(); // Should panic
-    }
-
-    #[test]
-    fn test_vec3_large_values() {
-        let vec: Vec3<usize> = (1_000_000, 2_000_000, 3_000_000).into();
-        assert_eq!(
-            vec,
-            Vec3 {
-                x: 1_000_000,
-                y: 2_000_000,
-                z: 3_000_000
-            }
-        );
-        assert_eq!(vec.i(), 2_000_000_usize);
-        assert_eq!(vec.j(), 1_000_000_usize);
-        assert_eq!(vec.k(), 3_000_000_usize);
-    }
-
-    #[test]
-    fn test_vec3_from_i64() {
-        let vec: Vec3<i64> = (10_i64, 20_i64, 30_i64).into();
-        assert_eq!(
-            vec,
-            Vec3 {
+        #[test]
+        fn add_tuple_to_vec3() {
+            let vec: Vec3<i32> = Vec3 {
                 x: 10,
                 y: 20,
-                z: 30
-            }
-        );
-    }
-
-    #[test]
-    fn test_vec3_from_i32() {
-        let vec: Vec3<i32> = (10_i32, -20_i32, 30_i32).into();
-        assert_eq!(
-            vec,
-            Vec3 {
-                x: 10,
-                y: -20,
-                z: 30
-            }
-        );
-    }
-
-    #[test]
-    fn test_vec3_from_u32() {
-        let vec: Vec3<u32> = (42_u32, 84_u32, 168_u32).into();
-        assert_eq!(
-            vec,
-            Vec3 {
-                x: 42,
-                y: 84,
-                z: 168
-            }
-        );
+                z: 30,
+            };
+            let result = vec + (5, 15, 25);
+            assert_eq!(
+                result,
+                Vec3 {
+                    x: 15,
+                    y: 35,
+                    z: 55
+                }
+            );
+        }
     }
 }
