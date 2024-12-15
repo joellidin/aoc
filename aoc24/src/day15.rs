@@ -27,6 +27,11 @@ impl Instruction {
             Instruction::Right => (0, 1),
         }
     }
+
+    fn get_next_position(self, position: &Vec2<i32>) -> Vec2<i32> {
+        let (dy, dx) = self.as_tuple();
+        *position + (dx, dy)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -84,12 +89,11 @@ pub fn generator(input: &str) -> (Grid, Vec<Instruction>) {
 
 impl Grid {
     fn move_one(&mut self, instruction: &Instruction) {
-        let (dy, dx) = instruction.as_tuple();
+        let pos = instruction.get_next_position(&self.robot);
         self.move_boxes(instruction);
-        let tile = self.map[(self.robot.y + dy) as usize][(self.robot.x + dx) as usize];
+        let tile = self.map[pos.i()][pos.j()];
         if matches!(tile, Tile::Void) {
-            self.robot.x += dx;
-            self.robot.y += dy;
+            self.robot = pos;
         }
     }
 
@@ -99,12 +103,9 @@ impl Grid {
         start_pos: Vec2<i32>,
     ) -> Option<Vec<(Tile, Vec2<i32>)>> {
         let mut result = Vec::new();
-        let mut next_pos = start_pos;
+        let next_pos = instruction.get_next_position(&start_pos);
 
-        let (dy, _) = instruction.as_tuple();
-        next_pos.y += dy;
-
-        let tile = self.map[next_pos.y as usize][next_pos.x as usize];
+        let tile = self.map[next_pos.i()][next_pos.j()];
 
         match tile {
             Tile::Wall => return None,
@@ -114,12 +115,12 @@ impl Grid {
                 let (left_pos, right_pos) = match tile {
                     Tile::BoxLeft => {
                         let l = next_pos;
-                        let r = (next_pos.x + 1, next_pos.y).into();
+                        let r = next_pos + (1, 0);
                         (l, r)
                     }
                     Tile::BoxRight => {
                         let r = next_pos;
-                        let l = (next_pos.x - 1, next_pos.y).into();
+                        let l = next_pos + (-1, 0);
                         (l, r)
                     }
                     _ => unreachable!(),
@@ -159,10 +160,9 @@ impl Grid {
 
         loop {
             // Move one step in the given horizontal direction
-            let (_, dx) = instruction.as_tuple();
-            current_pos.x += dx;
+            current_pos = instruction.get_next_position(&current_pos);
 
-            let tile = self.map[current_pos.y as usize][current_pos.x as usize];
+            let tile = self.map[current_pos.i()][current_pos.j()];
 
             match tile {
                 Tile::Wall => return None,
@@ -190,13 +190,13 @@ impl Grid {
         if let Some(boxes) = self.collect_boxes(instruction) {
             // Remove them from the map
             for (_, pos) in &boxes {
-                self.map[pos.y as usize][pos.x as usize] = Tile::Void;
+                self.map[pos.i()][pos.j()] = Tile::Void;
             }
 
             // Move them in the given direction
             for (tile, pos) in boxes {
-                let (dy, dx) = instruction.as_tuple();
-                self.map[(pos.y + dy) as usize][(pos.x + dx) as usize] = tile;
+                let new_pos = instruction.get_next_position(&pos);
+                self.map[new_pos.i()][new_pos.j()] = tile;
             }
         }
     }
@@ -236,41 +236,33 @@ impl Grid {
             println!();
         }
     }
+    fn solve(&mut self, instructions: &[Instruction]) -> u32 {
+        for instruction in instructions {
+            self.move_one(instruction);
+        }
+        let mut res = 0;
+        for (i, row) in self.map.iter().enumerate() {
+            for (j, &tile) in row.iter().enumerate() {
+                if matches!(tile, Tile::BoxLeft) {
+                    res += 100 * i + j;
+                }
+            }
+        }
+        res as u32
+    }
 }
 
 pub fn part_1(input: &(Grid, Vec<Instruction>)) -> u32 {
     let (grid, instructions) = input;
     let mut grid = grid.to_owned();
-    for instruction in instructions {
-        grid.move_one(instruction);
-    }
-    let mut res = 0;
-    for (i, row) in grid.map.iter().enumerate() {
-        for (j, &tile) in row.iter().enumerate() {
-            if matches!(tile, Tile::BoxLeft) {
-                res += 100 * i + j;
-            }
-        }
-    }
-    res as u32
+    grid.solve(instructions)
 }
 
 pub fn part_2(input: &(Grid, Vec<Instruction>)) -> u32 {
     let (grid, instructions) = input;
     let mut grid = grid.to_owned();
     grid.expand();
-    for instruction in instructions {
-        grid.move_one(instruction);
-    }
-    let mut res = 0;
-    for (i, row) in grid.map.iter().enumerate() {
-        for (j, &tile) in row.iter().enumerate() {
-            if matches!(tile, Tile::BoxLeft) {
-                res += 100 * i + j;
-            }
-        }
-    }
-    res as u32
+    grid.solve(instructions)
 }
 
 #[cfg(test)]
