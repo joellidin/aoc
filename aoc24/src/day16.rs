@@ -1,4 +1,4 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{BinaryHeap, HashSet};
 
 use aoc_utils::prelude::*;
 
@@ -77,7 +77,7 @@ fn dijkstra(map: &[Vec<char>], start: Vec2<i32>) -> Option<(u32, HashSet<Vec2<i3
     let mut best_score = u32::MAX;
 
     // Map from (pos, dir) to the best known score to reach that state.
-    let mut scores: HashMap<(Vec2<i32>, Direction), u32> = HashMap::new();
+    let mut scores = vec![vec![vec![0; 4]; map[0].len()]; map.len()];
 
     let mut initial_path = HashSet::new();
     initial_path.insert(start);
@@ -108,13 +108,14 @@ fn dijkstra(map: &[Vec<char>], start: Vec2<i32>) -> Option<(u32, HashSet<Vec2<i3
             continue;
         }
 
-        scores.insert((pos, dir), score);
+        scores[pos.i()][pos.j()][dir as usize] = score;
 
         for (new_pos, new_dir) in get_neighbours(map, pos, dir) {
             let cost = if new_dir != dir { 1000 } else { 1 };
             let new_score = score + cost;
 
-            if let Some(&known_score) = scores.get(&(new_pos, new_dir)) {
+            let known_score = scores[new_pos.i()][new_pos.j()][new_dir as usize];
+            if known_score > 0 {
                 if known_score == new_score {
                     best_positions.extend(&path);
                 }
