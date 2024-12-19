@@ -1,39 +1,68 @@
-use std::collections::HashMap;
+use std::cmp::Ordering;
 
-type Disk = Vec<Option<usize>>;
-type FileLengths = HashMap<usize, u32>;
-pub fn generator(input: &str) -> (Disk, FileLengths) {
-    let mut disk_map = Vec::with_capacity(input.len());
-    let mut file_lengths = HashMap::new();
-    let numbers = input
-        .chars()
-        .map(|c| c.to_digit(10).unwrap())
-        .collect::<Vec<_>>();
-    let mut pointer = 0;
-    numbers.chunks(2).enumerate().for_each(|(i, c)| {
-        for _ in pointer..pointer + c[0] {
-            disk_map.push(Some(i));
-        }
-        pointer += c[0];
-        file_lengths.insert(i, c[0]);
-        if c.len() == 2 {
-            for _ in pointer..pointer + c[1] {
-                disk_map.push(None);
-            }
-            pointer += c[1];
-        }
-    });
-    (disk_map, file_lengths)
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DiskEntry {
+    File { id: usize, size: usize },
+    Blank { size: usize },
 }
 
-pub fn part_1(input: &(Disk, FileLengths)) -> u64 {
-    let (mut disk, _) = input.clone();
+pub fn generator(input: &str) -> Vec<DiskEntry> {
+    input
+        .char_indices()
+        .map(|(i, c)| {
+            let size = c.to_digit(10).unwrap() as usize;
+            if i % 2 == 0 {
+                let id = i / 2;
+                DiskEntry::File { id, size }
+            } else {
+                DiskEntry::Blank { size }
+            }
+        })
+        .collect::<Vec<_>>()
+}
+
+fn calculate_checksum(memory: &[DiskEntry]) -> u64 {
+    memory
+        .iter()
+        .fold((0, 0), |mut acc, &disk| match disk {
+            DiskEntry::File { id, size } => {
+                for i in 0..size {
+                    acc.0 += id as u64 * (i as u64 + acc.1 as u64)
+                }
+                acc.1 += size;
+                acc
+            }
+            DiskEntry::Blank { size } => {
+                acc.1 += size;
+                acc
+            }
+        })
+        .0
+}
+
+pub fn part_1(input: &[DiskEntry]) -> u64 {
+    let mut memory = input
+        .iter()
+        .flat_map(|&entry| {
+            let mut flattened_entry = Vec::new();
+            match entry {
+                DiskEntry::File { id, size } => {
+                    (0..size).for_each(|_| flattened_entry.push(DiskEntry::File { id, size: 1 }));
+                }
+                DiskEntry::Blank { size } => {
+                    (0..size).for_each(|_| flattened_entry.push(DiskEntry::Blank { size: 1 }));
+                }
+            }
+            flattened_entry
+        })
+        .collect::<Vec<_>>();
+
     let mut i = 0;
-    for j in (0..disk.len()).rev() {
-        if disk[j].is_some() {
+    for j in (0..memory.len()).rev() {
+        if let DiskEntry::File { .. } = memory[j] {
             while i < j {
-                if disk[i].is_none() {
-                    disk.swap(i, j);
+                if let DiskEntry::Blank { .. } = memory[i] {
+                    memory.swap(i, j);
                     i += 1;
                     break;
                 }
@@ -42,61 +71,41 @@ pub fn part_1(input: &(Disk, FileLengths)) -> u64 {
         }
     }
 
-    // Calculate the final checksum
-    disk.iter()
-        .enumerate()
-        .filter_map(|(i, &n)| n.map(|fid| fid as u64 * i as u64))
-        .sum()
+    calculate_checksum(&memory)
 }
 
-pub fn part_2(input: &(Disk, FileLengths)) -> u64 {
-    let (mut disk, file_lengths) = input.clone();
-    let highest_file_number = *file_lengths.keys().max().unwrap();
-
-    // Move files in descending order by file ID, as per Part Two rules.
-    for fid in (0..=highest_file_number).rev() {
-        let file_len = file_lengths[&fid];
-
-        let file_start = disk
-            .iter()
-            .position(|&block| block == Some(fid))
-            .expect("We must find the start of the file.");
-
-        // Find free space to put the file
-        let mut run_start = 0;
-        let mut run_length = 0;
-        let mut best_start = None;
-
-        for (i, block) in disk.iter().enumerate().take(file_start) {
-            if block.is_none() {
-                run_length += 1;
-            } else {
-                run_length = 0;
-                run_start = i + 1;
-            }
-
-            if run_length == file_len {
-                best_start = Some(run_start);
-                break;
-            }
-        }
-
-        if let Some(new_start) = best_start {
-            for offset in 0..file_len {
-                // Clear the old file location
-                disk[file_start + offset as usize] = None;
-
-                // Place the file at the new location
-                disk[new_start + offset as usize] = Some(fid);
+pub fn part_2(input: &[DiskEntry]) -> u64 {
+    let mut memory = input.to_vec();
+    for i in (0..memory.len()).rev() {
+        if let DiskEntry::File {
+            id,
+            size: file_size,
+        } = memory[i]
+        {
+            for j in 0..i {
+                if let DiskEntry::Blank { size: blank_size } = memory[j] {
+                    let file_compare = blank_size.cmp(&file_size);
+                    if let Ordering::Equal | Ordering::Greater = file_compare {
+                        memory[i] = DiskEntry::Blank { size: file_size };
+                        memory[j] = DiskEntry::File {
+                            id,
+                            size: file_size,
+                        };
+                        if let Ordering::Greater = file_compare {
+                            memory.insert(
+                                j + 1,
+                                DiskEntry::Blank {
+                                    size: blank_size - file_size,
+                                },
+                            );
+                        }
+                        break;
+                    }
+                }
             }
         }
     }
-
-    // Calculate the final checksum
-    disk.iter()
-        .enumerate()
-        .filter_map(|(i, &n)| n.map(|fid| fid as u64 * i as u64))
-        .sum()
+    calculate_checksum(&memory)
 }
 
 #[cfg(test)]
