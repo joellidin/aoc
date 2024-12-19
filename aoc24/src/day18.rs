@@ -75,17 +75,21 @@ pub fn part_1(input: &[Vec2<i32>]) -> u32 {
 }
 
 pub fn part_2(input: &[Vec2<i32>]) -> String {
-    let mut corrupted_bytes: HashSet<_> = input.iter().take(PART_1_MEMORY_SPACE).cloned().collect();
     let end: Vec2<i32> = (HEIGHT, WIDTH).into();
-    if let Some(Vec2 { x, y }) = input.iter().skip(PART_1_MEMORY_SPACE).find(|&&byte| {
-        corrupted_bytes.insert(byte);
-        let res = dijkstra(&corrupted_bytes, &end);
-        res.is_none()
-    }) {
-        format!("{x},{y}")
-    } else {
-        panic!("Could not find a solution")
+    let mut left = 0;
+    let mut right = input.len();
+    let mut mid = 0;
+    while left < right {
+        mid = (right + left) / 2;
+        let corrupted_bytes = input.iter().take(mid).cloned().collect();
+        if dijkstra(&corrupted_bytes, &end).is_some() {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
     }
+    let p = input.get(mid).unwrap();
+    format!("{},{}", p.x, p.y)
 }
 
 #[cfg(test)]
