@@ -1,4 +1,7 @@
-use std::collections::{hash_map::Entry, HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    rc::Rc,
+};
 
 use aoc_utils::prelude::*;
 
@@ -12,12 +15,20 @@ pub fn generator(input: &str) -> Vec<(&str, u64)> {
         .collect()
 }
 
-fn bfs(start: char, end: char, num: bool) -> Vec<String> {
-    let mut dist = HashMap::new();
+fn bfs(
+    start: char,
+    end: char,
+    num: bool,
+    cache: &mut HashMap<(char, char, bool), Vec<Rc<str>>>,
+) -> Vec<Rc<str>> {
+    if let Some(res) = cache.get(&(start, end, num)) {
+        return res.to_vec();
+    }
+    let mut distances = HashMap::new();
     let mut q = VecDeque::new();
     let mut results = Vec::new();
 
-    dist.insert(start, 0);
+    distances.insert(start, 0);
     q.push_back((start, String::new(), 0));
 
     let mut min_dist_end = None;
@@ -30,40 +41,27 @@ fn bfs(start: char, end: char, num: bool) -> Vec<String> {
         }
 
         if pos == end {
-            if min_dist_end.is_none() || d < min_dist_end.unwrap() {
-                min_dist_end = Some(d);
-                results.clear();
-            }
-
-            if Some(d) == min_dist_end {
-                let mut new_path = path.clone();
-                new_path.push('A');
-                results.push(new_path);
-            }
+            let mut new_path = path.clone();
+            new_path.push('A');
+            let path_rc = Rc::<str>::from(new_path);
+            results.push(path_rc);
+            min_dist_end = Some(d);
             continue;
         }
 
+        distances.insert(pos, d);
         for (new_pos, action) in get_neighbours(&pos, num) {
-            let next_dist = d + 1;
-
-            if let Entry::Vacant(e) = dist.entry(new_pos) {
-                e.insert(next_dist);
-                let mut new_path = path.clone();
-                new_path.push(action);
-                q.push_back((new_pos, new_path, next_dist));
-            } else if dist[&new_pos] == next_dist {
-                let mut new_path = path.clone();
-                new_path.push(action);
-                q.push_back((new_pos, new_path, next_dist));
-            }
+            let mut new_path = path.clone();
+            new_path.push(action);
+            q.push_back((new_pos, new_path, d + 1));
         }
     }
-
-    results
+    cache.insert((start, end, num), results);
+    cache.get(&(start, end, num)).unwrap().to_vec()
 }
 
-fn get_neighbours(dir: &char, num: bool) -> Vec<(char, char)> {
-    match dir {
+fn get_neighbours(curr: &char, num: bool) -> Vec<(char, char)> {
+    match curr {
         '0' => vec![('A', '>'), ('2', '^')],
         '1' => vec![('2', '>'), ('4', '^')],
         '2' => vec![('1', '<'), ('3', '>'), ('5', '^'), ('0', 'v')],
@@ -84,13 +82,19 @@ fn get_neighbours(dir: &char, num: bool) -> Vec<(char, char)> {
     }
 }
 
+type CacheKey = (Rc<str>, usize, usize);
 fn solve(
-    goal: &String,
+    goal: &str,
     depth: usize,
     target_depth: usize,
-    cache: &mut HashMap<(String, usize, usize), u64>,
+    cache: &mut HashMap<CacheKey, u64>,
+    bfs_cache: &mut HashMap<(char, char, bool), Vec<Rc<str>>>,
 ) -> u64 {
-    if let Some(res) = cache.get(&(goal.to_string(), depth, target_depth)) {
+    // Create the key just once.
+    let goal_rc = Rc::<str>::from(goal);
+    let key = (goal_rc.clone(), depth, target_depth);
+
+    if let Some(res) = cache.get(&key) {
         return *res;
     }
 
@@ -99,45 +103,47 @@ fn solve(
         let res = goal
             .chars()
             .map(|c| {
-                let res = bfs(new_start, c, false)[0].len() as u64;
+                let res = bfs(new_start, c, false, bfs_cache)[0].len() as u64;
                 new_start = c;
                 res
             })
             .sum();
-        cache.insert((goal.to_string(), depth, target_depth), res);
+        cache.insert(key, res);
         return res;
     }
 
     let mut new_start = 'A';
     let mut sum = 0;
-    for c in goal.chars() {
+    goal.chars().for_each(|c| {
         let paths = if depth == 0 {
-            bfs(new_start, c, true)
+            bfs(new_start, c, true, bfs_cache)
         } else {
-            bfs(new_start, c, false)
+            bfs(new_start, c, false, bfs_cache)
         };
         sum += paths
             .iter()
-            .map(|s| solve(s, depth + 1, target_depth, cache))
+            .map(|s| solve(s, depth + 1, target_depth, cache, bfs_cache))
             .min()
             .expect("Must find a path");
         new_start = c;
-    }
-    cache.insert((goal.to_string(), depth, target_depth), sum);
+    });
+    cache.insert(key, sum);
     sum
 }
 
 pub fn part_1(input: &[(&str, u64)]) -> u64 {
     input.iter().fold(0, |acc, (s, num)| {
         let mut cache = HashMap::new();
-        acc + solve(&s.to_string(), 0, 2, &mut cache) * num
+        let mut bfs_cache = HashMap::new();
+        acc + solve(s, 0, 2, &mut cache, &mut bfs_cache) * num
     })
 }
 
 pub fn part_2(input: &[(&str, u64)]) -> u64 {
     input.iter().fold(0, |acc, (s, num)| {
         let mut cache = HashMap::new();
-        acc + solve(&s.to_string(), 0, 25, &mut cache) * num
+        let mut bfs_cache = HashMap::new();
+        acc + solve(s, 0, 25, &mut cache, &mut bfs_cache) * num
     })
 }
 
