@@ -1,49 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc_utils::prelude::*;
-
 pub fn generator(input: &str) -> Vec<u64> {
     input
         .lines()
-        .map(|line| {
-            let &[x, ..] = extract_integers::<u64>(line).as_slice() else {
-                panic!("Could not parse integers")
-            };
-            x
-        })
+        .map(|line| line.parse().expect("Input musy be parsable to a number"))
         .collect()
 }
 
 fn apply_secret(num: u64) -> u64 {
-    let mut secret = num;
-
-    // multiply
-    let mul = secret << 6;
-
-    // Mix
-    secret ^= mul;
-
-    // Prune
-    secret %= 16777216;
-
-    // Step 2
-    let div = secret >> 5;
-
-    // Mix
-    secret ^= div;
-
-    // Prune
-    secret %= 16777216;
-
-    // Step 2
-    let mul = secret << 11;
-
-    // Mix
-    secret ^= mul;
-
-    // Prune
-    secret %= 16777216;
-
+    let mut secret = num ^ ((num << 6) & 0xFFFFFF);
+    secret ^= (secret >> 5) & 0xFFFFFF;
+    secret ^= (secret << 11) & 0xFFFFFF;
     secret
 }
 
@@ -58,37 +25,28 @@ pub fn part_1(input: &[u64]) -> u64 {
 }
 
 pub fn part_2(input: &[u64]) -> u64 {
-    let mut sequences = HashSet::new();
-    let mut bananas = HashMap::new();
-    input.iter().for_each(|n| {
-        let mut one = apply_secret(*n);
-        let mut two = apply_secret(one);
-        let mut three = apply_secret(two);
-        let mut four = apply_secret(three);
-        for _ in 4..2000 {
-            let old_one = one;
-            one = two;
-            two = three;
-            three = four;
-            four = apply_secret(four);
-            let first_diff = (four % 10) as i8 - (three % 10) as i8;
-            let second_diff = (three % 10) as i8 - (two % 10) as i8;
-            let third_diff = (two % 10) as i8 - (one % 10) as i8;
-            let fourth_diff = (one % 10) as i8 - (old_one % 10) as i8;
-
-            let key = (n, first_diff, second_diff, third_diff, fourth_diff);
-            bananas.entry(key).or_insert_with(|| four % 10);
-            sequences.insert((first_diff, second_diff, third_diff, fourth_diff));
-        }
-    });
-    sequences
+    *input
         .iter()
-        .map(|g| {
-            input
-                .iter()
-                .filter_map(|n| bananas.get(&(n, g.0, g.1, g.2, g.3)))
-                .sum::<u64>()
+        .fold(HashMap::<(i8, i8, i8, i8), u64>::new(), |mut acc, &n| {
+            let mut bananas = vec![(n % 10) as i8];
+            let mut secret = n;
+            for _ in 0..2000 {
+                secret = apply_secret(secret);
+                bananas.push((secret % 10) as i8);
+            }
+            let mut seen = HashSet::new();
+            bananas.windows(5).for_each(|s| {
+                let d1 = s[4] - s[3];
+                let d2 = s[3] - s[2];
+                let d3 = s[2] - s[1];
+                let d4 = s[1] - s[0];
+                if seen.insert((d1, d2, d3, d4)) {
+                    *acc.entry((d1, d2, d3, d4)).or_default() += s[4] as u64;
+                }
+            });
+            acc
         })
+        .values()
         .max()
         .unwrap()
 }
