@@ -1,5 +1,3 @@
-use aoc_utils::prelude::*;
-
 pub enum Dir {
     Left,
     Right,
